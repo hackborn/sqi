@@ -15,46 +15,6 @@ type AstNode interface {
 }
 
 // ------------------------------------------------------------
-// FIELD-NODE
-
-// fieldNode is used to select a field from the current interface{}.
-type fieldNode struct {
-	Field string
-}
-
-func (n *fieldNode) Run(_i interface{}) (interface{}, error) {
-	//	fmt.Println("Run fieldNode", n.field)
-	if len(n.Field) < 1 {
-		return nil, errors.New("Missing fieled select")
-	}
-	var child interface{}
-	var err error
-	switch t := _i.(type) {
-	case map[string]interface{}:
-		child = t[n.Field]
-	case reflect.Value:
-		return nil, errors.New("Internal error: fieldNode must not receive reflect.Value")
-	default:
-		child, err = n.runOnValue(reflect.Indirect(reflect.ValueOf(_i)))
-	}
-	if child == nil || err != nil {
-		return nil, err
-	}
-	if tt, ok := child.(reflect.Value); ok {
-		return tt.Interface(), nil
-	}
-	return child, err
-}
-
-func (n *fieldNode) runOnValue(v reflect.Value) (interface{}, error) {
-	f := v.FieldByName(n.Field)
-	if f.IsValid() {
-		return f, nil
-	}
-	return nil, errors.New("No field for " + n.Field)
-}
-
-// ------------------------------------------------------------
 // BINARY-NODE
 
 // binaryNode performs binary operations on the current interface{}.
@@ -107,6 +67,72 @@ func (n *binaryNode) runEquals(_i interface{}) (bool, error) {
 	}
 	eq := interfacesEqual(lhs, rhs)
 	return eq, nil
+}
+
+// ------------------------------------------------------------
+// FIELD-NODE
+
+// fieldNode is used to select a field from the current interface{}.
+type fieldNode struct {
+	Field string
+}
+
+func (n *fieldNode) Run(_i interface{}) (interface{}, error) {
+	//	fmt.Println("Run fieldNode", n.field)
+	if len(n.Field) < 1 {
+		return nil, errors.New("Missing fieled select")
+	}
+	var child interface{}
+	var err error
+	switch t := _i.(type) {
+	case map[string]interface{}:
+		child = t[n.Field]
+	case reflect.Value:
+		return nil, errors.New("Internal error: fieldNode must not receive reflect.Value")
+	default:
+		child, err = n.runOnValue(reflect.Indirect(reflect.ValueOf(_i)))
+	}
+	if child == nil || err != nil {
+		return nil, err
+	}
+	if tt, ok := child.(reflect.Value); ok {
+		return tt.Interface(), nil
+	}
+	return child, err
+}
+
+func (n *fieldNode) runOnValue(v reflect.Value) (interface{}, error) {
+	f := v.FieldByName(n.Field)
+	if f.IsValid() {
+		return f, nil
+	}
+	return nil, errors.New("No field for " + n.Field)
+}
+
+// ------------------------------------------------------------
+// FLOAT-NODE
+
+// floatNode returns a constant float64.
+type floatNode struct {
+	Value float64
+}
+
+func (n *floatNode) Run(_i interface{}) (interface{}, error) {
+	//	fmt.Println("Run floatNode", n.Value)
+	return n.Value, nil
+}
+
+// ------------------------------------------------------------
+// INT-NODE
+
+// intNode returns a constant int.
+type intNode struct {
+	Value int
+}
+
+func (n *intNode) Run(_i interface{}) (interface{}, error) {
+	//	fmt.Println("Run intNode", n.Value)
+	return n.Value, nil
 }
 
 // ------------------------------------------------------------

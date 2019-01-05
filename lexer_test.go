@@ -46,6 +46,12 @@ func tokens(all ...interface{}) []token_t {
 	var tokens []token_t
 	for _, t := range all {
 		switch v := t.(type) {
+		case float32:
+			val := strconv.FormatFloat(float64(v), 'f', 8, 64)
+			tokens = append(tokens, token_t{float_token, val})
+		case float64:
+			val := strconv.FormatFloat(v, 'f', 8, 64)
+			tokens = append(tokens, token_t{float_token, val})
 		case int:
 			tokens = append(tokens, token_t{int_token, strconv.Itoa(v)})
 		case string:

@@ -89,6 +89,24 @@ func (n *tree_node) asAst() (AstNode, error) {
 			return nil, err
 		}
 		return &binaryNode{Op: eql_token, Lhs: lhs, Rhs: rhs}, nil
+	case float_token:
+		if len(n.Children) != 0 {
+			return nil, errors.New("sqi: parse float has wrong number of children: " + strconv.Itoa(len(n.Children)))
+		}
+		f64, err := strconv.ParseFloat(n.T.Text, 64)
+		if err != nil {
+			return nil, err
+		}
+		return &floatNode{Value: f64}, nil
+	case int_token:
+		if len(n.Children) != 0 {
+			return nil, errors.New("sqi: parse int has wrong number of children: " + strconv.Itoa(len(n.Children)))
+		}
+		i, err := strconv.ParseInt(n.T.Text, 10, 32)
+		if err != nil {
+			return nil, err
+		}
+		return &intNode{Value: int(i)}, nil
 	case open_token:
 		child, err := n.makeUnary()
 		if err != nil {
@@ -103,7 +121,7 @@ func (n *tree_node) asAst() (AstNode, error) {
 		return &pathNode{Lhs: lhs, Rhs: rhs}, nil
 	case string_token:
 		if len(n.Children) != 0 {
-			return nil, errors.New("sqi: parse field has wrong number of children: " + strconv.Itoa(len(n.Children)))
+			return nil, errors.New("sqi: parse string has wrong number of children: " + strconv.Itoa(len(n.Children)))
 		}
 		// There are rules on strings -- based on context I can be either a field or string node
 		ctx := n.getCtx()

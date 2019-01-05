@@ -70,6 +70,14 @@ func field_n(name string) AstNode {
 	return &fieldNode{Field: name}
 }
 
+func float_n(value float64) AstNode {
+	return &floatNode{Value: value}
+}
+
+func int_n(value int) AstNode {
+	return &intNode{Value: value}
+}
+
 func paren_n(child AstNode) AstNode {
 	return &unaryNode{Op: open_token, Child: child}
 }
