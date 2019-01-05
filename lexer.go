@@ -118,6 +118,10 @@ func (t token_t) reclassify() token_t {
 	return t
 }
 
+func (t token_t) isBinary() bool {
+	return t.tok > start_binary && t.tok < end_binary
+}
+
 // ----------------------------------------
 // CONST and VAR
 
@@ -133,6 +137,8 @@ const (
 	float_token  // 123.45
 	string_token // "abc"
 
+	start_binary // All binary operators must be after this
+
 	// Assignment
 	assign_token // =
 
@@ -146,6 +152,8 @@ const (
 	// Conditional
 	and_token // &&
 	or_token  // ||
+
+	end_binary // All binary operators must be before this
 
 	// Precendence
 	open_token  // (

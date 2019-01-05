@@ -7,38 +7,101 @@ import (
 
 // parse() converts tokens into an AST.
 func parse(tokens []token_t) (AstNode, error) {
-	var resp AstNode
-	var err error
-	for i := 0; i < len(tokens); i++ {
-		resp, i, err = new_node(resp, i, tokens)
+	tree, err := make_tree(tokens)
+	if err != nil {
+		return nil, err
+	}
+	if tree == nil || len(tree.children) != 1 {
+		return nil, errors.New("sqi: parse created empty tree")
+	}
+	return tree.children[0].asAst()
+}
+
+func make_tree(tokens []token_t) (*tree_node, error) {
+	root := &tree_node{}
+	cur := root
+	for _, t := range tokens {
+		tn := &tree_node{t: t}
+		if t.isBinary() {
+			if cur.parent == nil {
+				return nil, errors.New("sqi: parse has binary with no parent")
+			}
+			err := cur.parent.replaceChild(cur, tn)
+			if err != nil {
+				return nil, err
+			}
+			cur = tn
+		} else {
+			cur.addChild(tn)
+			cur = tn
+		}
+	}
+	return root, nil
+}
+
+// ----------------------------------------
+// TREE-NODE
+
+// tree_node is used to assemble the tokens into a tree.
+type tree_node struct {
+	parent   *tree_node
+	children []*tree_node
+	t        token_t
+}
+
+func (n *tree_node) addChild(child *tree_node) {
+	child.parent = n
+	n.children = append(n.children, child)
+}
+
+func (n *tree_node) replaceChild(oldchild, newchild *tree_node) error {
+	for i, c := range n.children {
+		if c == oldchild {
+			newchild.addChild(oldchild)
+			newchild.parent = n
+			n.children[i] = newchild
+			return nil
+		}
+	}
+	return errors.New("sqi: parse missing child")
+}
+
+func (n *tree_node) asAst() (AstNode, error) {
+	switch n.t.tok {
+	case string_token:
+		if len(n.children) != 0 {
+			return nil, errors.New("sqi: parse field has wrong number of children: " + strconv.Itoa(len(n.children)))
+		}
+		return &fieldNode{Field: n.t.text}, nil
+	case path_token:
+		lhs, rhs, err := n.makeBinary()
 		if err != nil {
 			return nil, err
 		}
+		return &pathNode{Lhs: lhs, Rhs: rhs}, nil
+		/*
+			case eql_token:
+				lhs, rhs, err := n.makeBinary()
+				if err != nil {
+					return nil, err
+				}
+				return &binaryOpNode{Op: `==`, Lhs: lhs, Rhs: rhs}, nil
+		*/
 	}
-	return resp, nil
+	return nil, errors.New("sqi: parse on unknown token: " + strconv.Itoa(int(n.t.tok)))
 }
 
-func new_node(prv AstNode, pos int, tokens []token_t) (AstNode, int, error) {
-	if pos >= len(tokens) {
-		return nil, 0, errors.New("sqi: parse out of bounds")
+func (n *tree_node) makeBinary() (AstNode, AstNode, error) {
+	if len(n.children) != 2 {
+		return nil, nil, errors.New("sqi: parse path has wrong number of children: " + strconv.Itoa(len(n.children)))
 	}
-	token := tokens[pos]
-	switch token.tok {
-	case string_token:
-		// The only time this is valid is when there's no previous
-		if prv != nil {
-			return nil, 0, errors.New("sqi: parse string node has a previous")
-		}
-		return &fieldNode{Field: token.text}, pos, nil
-	case path_token:
-		if prv == nil {
-			return nil, 0, errors.New("sqi: parse path node has no previous")
-		}
-		rhs, pos, err := new_node(nil, pos+1, tokens)
-		if err != nil {
-			return nil, 0, err
-		}
-		return &pathNode{Lhs: prv, Rhs: rhs}, pos, nil
+	lhs, err := n.children[0].asAst()
+	if err != nil {
+		return nil, nil, err
 	}
-	return nil, 0, errors.New("sqi: unknown token " + strconv.Itoa(int(token.tok)))
+	rhs, err := n.children[1].asAst()
+	if err != nil {
+		return nil, nil, err
+	}
+	return lhs, rhs, nil
 }
