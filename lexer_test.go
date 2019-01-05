@@ -15,6 +15,8 @@ func TestLexer(t *testing.T) {
 		WantResp []token_t
 		WantErr  error
 	}{
+		{`Child/Name`, tokens(`Child`, `/`, `Name`), nil},
+		{`Child		/	Name`, tokens(`Child`, `/`, `Name`), nil},
 		{`Child/Name=="a"`, tokens(`Child`, `/`, `Name`, `==`, `"a"`), nil},
 		{`Child / Name == "a"`, tokens(`Child`, `/`, `Name`, `==`, `"a"`), nil},
 		{`Child/(Name=="a"||Age==10)`, tokens(`Child`, `/`, `(`, `Name`, `==`, `"a"`, `||`, `Age`, `==`, 10, `)`), nil},
