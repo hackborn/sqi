@@ -63,7 +63,7 @@ func tokens(all ...interface{}) []token_t {
 		case int:
 			tokens = append(tokens, token_t{int_token, strconv.Itoa(v)})
 		case string:
-			tokens = append(tokens, token_t{string_token, v})
+			tokens = append(tokens, token_t{string_token, v}.reclassify())
 		}
 	}
 	return tokens

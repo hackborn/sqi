@@ -52,14 +52,6 @@ func scan(input string) ([]token_t, error) {
 }
 
 // ----------------------------------------
-// TOKEN_T
-
-type token_t struct {
-	tok  Token
-	text string
-}
-
-// ----------------------------------------
 // IDENT-RUNER
 
 // ident_runer supplies the rules for turning runes into idents.
@@ -82,7 +74,7 @@ func (r *ident_runer) addString(s string) {
 }
 
 func (r *ident_runer) addToken(t token_t) {
-	r.tokens = append(r.tokens, t)
+	r.tokens = append(r.tokens, t.reclassify())
 }
 
 func (r *ident_runer) accumulate(ch rune) {
@@ -105,6 +97,28 @@ func (r *ident_runer) flush() {
 }
 
 // ----------------------------------------
+// TOKEN_T
+
+type token_t struct {
+	tok  Token
+	text string
+}
+
+// reclassify() converts this token into one of the defined
+// keywords, if appropriate. Ideally this is done directly
+// in the scanning stage, but I'm not sure how to get the
+// scanner to do that.
+func (t token_t) reclassify() token_t {
+	if t.tok != string_token {
+		return t
+	}
+	if found, ok := keywords[t.text]; ok {
+		return token_t{found, t.text}
+	}
+	return t
+}
+
+// ----------------------------------------
 // CONST and VAR
 
 type Token int
@@ -114,8 +128,7 @@ const (
 	illegal_token Token = iota
 	eof_token
 
-	// Raw values. These are produced by the lexer; the parser is
-	// required to translate strings into meaningful tokens.
+	// Raw values.
 	int_token    // 12345
 	float_token  // 123.45
 	string_token // "abc"
@@ -134,4 +147,16 @@ const (
 	// Precendence
 	open_token  // (
 	close_token // )
+)
+
+var (
+	keywords = map[string]Token{
+		`=`:  assign_token,
+		`==`: eql_token,
+		`!=`: neq_token,
+		`&&`: and_token,
+		`||`: or_token,
+		`(`:  open_token,
+		`)`:  close_token,
+	}
 )
