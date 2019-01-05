@@ -17,7 +17,7 @@ func TestParser(t *testing.T) {
 		{tokens(`Child`), parser_want_0, nil},
 		{tokens(`Child`, `/`, `Name`), parser_want_1, nil},
 		{tokens(`Child`, `/`, `Arm`, `/`, `Length`), parser_want_2, nil},
-		//		{tokens(`Child`, `/`, `Name`, `==`, `a`), parser_want_3, nil},
+		{tokens(`Child`, `/`, `Name`, `==`, `a`), parser_want_3, nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
@@ -34,10 +34,10 @@ func TestParser(t *testing.T) {
 }
 
 var (
-	parser_want_0 = &fieldNode{Field: `Child`}
-	parser_want_1 = &pathNode{Lhs: &fieldNode{Field: `Child`}, Rhs: &fieldNode{Field: `Name`}}
-	parser_want_2 = &pathNode{Lhs: &fieldNode{Field: `Child`}, Rhs: &pathNode{Lhs: &fieldNode{Field: `Arm`}, Rhs: &fieldNode{Field: `Length`}}}
-	parser_want_3 = &pathNode{Lhs: &fieldNode{Field: `Child`}, Rhs: &pathNode{Lhs: &fieldNode{Field: `Name`}, Rhs: &fieldNode{Field: `a`}}}
+	parser_want_0 = field_n(`Child`)
+	parser_want_1 = path_n(field_n(`Child`), field_n(`Name`))
+	parser_want_2 = path_n(field_n(`Child`), path_n(field_n(`Arm`), field_n(`Length`)))
+	parser_want_3 = path_n(field_n(`Child`), eql_n(field_n(`Name`), string_n(`a`)))
 )
 
 // --------------------------------------------------------------------------------------

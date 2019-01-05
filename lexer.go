@@ -132,7 +132,7 @@ const (
 	illegal_token Token = iota
 	eof_token
 
-	// Raw values.
+	// Raw values
 	int_token    // 12345
 	float_token  // 123.45
 	string_token // "abc"
@@ -155,7 +155,7 @@ const (
 
 	end_binary // All binary operators must be before this
 
-	// Precendence
+	// Precedence
 	open_token  // (
 	close_token // )
 )

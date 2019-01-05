@@ -17,6 +17,9 @@ func parse(tokens []token_t) (AstNode, error) {
 	return tree.children[0].asAst()
 }
 
+// make_tree() creates the tree structure. It is solely concerned about
+// the structure -- i.e. it cares that a token is a binary, but does not
+// care what type of binary it is.
 func make_tree(tokens []token_t) (*tree_node, error) {
 	root := &tree_node{}
 	cur := root
@@ -68,25 +71,28 @@ func (n *tree_node) replaceChild(oldchild, newchild *tree_node) error {
 
 func (n *tree_node) asAst() (AstNode, error) {
 	switch n.t.tok {
-	case string_token:
-		if len(n.children) != 0 {
-			return nil, errors.New("sqi: parse field has wrong number of children: " + strconv.Itoa(len(n.children)))
+	case eql_token:
+		lhs, rhs, err := n.makeBinary()
+		if err != nil {
+			return nil, err
 		}
-		return &fieldNode{Field: n.t.text}, nil
+		return &binaryOpNode{Op: eql_token, Lhs: lhs, Rhs: rhs}, nil
 	case path_token:
 		lhs, rhs, err := n.makeBinary()
 		if err != nil {
 			return nil, err
 		}
 		return &pathNode{Lhs: lhs, Rhs: rhs}, nil
-		/*
-			case eql_token:
-				lhs, rhs, err := n.makeBinary()
-				if err != nil {
-					return nil, err
-				}
-				return &binaryOpNode{Op: `==`, Lhs: lhs, Rhs: rhs}, nil
-		*/
+	case string_token:
+		if len(n.children) != 0 {
+			return nil, errors.New("sqi: parse field has wrong number of children: " + strconv.Itoa(len(n.children)))
+		}
+		// There are rules on strings -- based on context I can be either a field or string node
+		ctx := n.getCtx()
+		if ctx == string_tree_ctx {
+			return &stringNode{Value: n.t.text}, nil
+		}
+		return &fieldNode{Field: n.t.text}, nil
 	}
 	return nil, errors.New("sqi: parse on unknown token: " + strconv.Itoa(int(n.t.tok)))
 }
@@ -105,3 +111,44 @@ func (n *tree_node) makeBinary() (AstNode, AstNode, error) {
 	}
 	return lhs, rhs, nil
 }
+
+// getCtx() answers the context for this token, based on its position in the syntax tree.
+func (n *tree_node) getCtx() tree_ctx {
+	// Not sure how this will evolve, but currently only strings that are rhs of binaries have meaning.
+	if n.t.tok != string_token || n.parent == nil || len(n.parent.children) != 2 {
+		return empty_tree_ctx
+	}
+	if !n.parent.isToken(string_capable_rhs...) {
+		return empty_tree_ctx
+	}
+	if n.parent.children[1] == n {
+		return string_tree_ctx
+	}
+	return empty_tree_ctx
+}
+
+func (n *tree_node) isToken(tokens ...Token) bool {
+	for _, t := range tokens {
+		if n.t.tok == t {
+			return true
+		}
+	}
+	return false
+}
+
+// ----------------------------------------
+// CONST and VAR
+
+type tree_ctx int
+
+const (
+	// Special tokens
+	empty_tree_ctx tree_ctx = iota
+
+	field_tree_ctx
+	string_tree_ctx
+)
+
+var (
+	string_capable_rhs = []Token{assign_token, eql_token, neq_token}
+)
