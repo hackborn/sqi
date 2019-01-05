@@ -8,6 +8,10 @@ func interfacesEqual(a, b interface{}) bool {
 		return false
 	}
 	switch at := a.(type) {
+	case bool:
+		if bt, ok := b.(bool); ok {
+			return at == bt
+		}
 	case string:
 		if bt, ok := b.(string); ok {
 			return at == bt

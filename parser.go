@@ -11,10 +11,11 @@ func parse(tokens []token_t) (AstNode, error) {
 	if err != nil {
 		return nil, err
 	}
-	if tree == nil || len(tree.children) != 1 {
+	if tree == nil || len(tree.Children) != 1 {
 		return nil, errors.New("sqi: parse created empty tree")
 	}
-	return tree.children[0].asAst()
+	// fmt.Println("tree:", toJson(tree))
+	return tree.Children[0].asAst()
 }
 
 // make_tree() creates the tree structure. It is solely concerned about
@@ -23,17 +24,28 @@ func parse(tokens []token_t) (AstNode, error) {
 func make_tree(tokens []token_t) (*tree_node, error) {
 	root := &tree_node{}
 	cur := root
+	var paren []*tree_node
 	for _, t := range tokens {
-		tn := &tree_node{t: t}
+		tn := &tree_node{T: t}
 		if t.isBinary() {
-			if cur.parent == nil {
+			if cur.Parent == nil {
 				return nil, errors.New("sqi: parse has binary with no parent")
 			}
-			err := cur.parent.replaceChild(cur, tn)
+			err := cur.Parent.replaceChild(cur, tn)
 			if err != nil {
 				return nil, err
 			}
 			cur = tn
+		} else if t.isOpenParen() {
+			cur.addChild(tn)
+			paren = append(paren, tn)
+			cur = tn
+		} else if t.isCloseParen() {
+			if len(paren) < 1 {
+				return nil, errors.New("sqi: mismatched parentheses")
+			}
+			cur = paren[len(paren)-1]
+			paren = paren[:len(paren)-1]
 		} else {
 			cur.addChild(tn)
 			cur = tn
@@ -47,22 +59,22 @@ func make_tree(tokens []token_t) (*tree_node, error) {
 
 // tree_node is used to assemble the tokens into a tree.
 type tree_node struct {
-	parent   *tree_node
-	children []*tree_node
-	t        token_t
+	Parent   *tree_node `json:"-"`
+	Children []*tree_node
+	T        token_t
 }
 
 func (n *tree_node) addChild(child *tree_node) {
-	child.parent = n
-	n.children = append(n.children, child)
+	child.Parent = n
+	n.Children = append(n.Children, child)
 }
 
 func (n *tree_node) replaceChild(oldchild, newchild *tree_node) error {
-	for i, c := range n.children {
+	for i, c := range n.Children {
 		if c == oldchild {
 			newchild.addChild(oldchild)
-			newchild.parent = n
-			n.children[i] = newchild
+			newchild.Parent = n
+			n.Children[i] = newchild
 			return nil
 		}
 	}
@@ -70,13 +82,19 @@ func (n *tree_node) replaceChild(oldchild, newchild *tree_node) error {
 }
 
 func (n *tree_node) asAst() (AstNode, error) {
-	switch n.t.tok {
+	switch n.T.Tok {
 	case eql_token:
 		lhs, rhs, err := n.makeBinary()
 		if err != nil {
 			return nil, err
 		}
-		return &binaryOpNode{Op: eql_token, Lhs: lhs, Rhs: rhs}, nil
+		return &binaryNode{Op: eql_token, Lhs: lhs, Rhs: rhs}, nil
+	case open_token:
+		child, err := n.makeUnary()
+		if err != nil {
+			return nil, err
+		}
+		return &unaryNode{Op: open_token, Child: child}, nil
 	case path_token:
 		lhs, rhs, err := n.makeBinary()
 		if err != nil {
@@ -84,44 +102,51 @@ func (n *tree_node) asAst() (AstNode, error) {
 		}
 		return &pathNode{Lhs: lhs, Rhs: rhs}, nil
 	case string_token:
-		if len(n.children) != 0 {
-			return nil, errors.New("sqi: parse field has wrong number of children: " + strconv.Itoa(len(n.children)))
+		if len(n.Children) != 0 {
+			return nil, errors.New("sqi: parse field has wrong number of children: " + strconv.Itoa(len(n.Children)))
 		}
 		// There are rules on strings -- based on context I can be either a field or string node
 		ctx := n.getCtx()
 		if ctx == string_tree_ctx {
-			return &stringNode{Value: n.t.text}, nil
+			return &stringNode{Value: n.T.Text}, nil
 		}
-		return &fieldNode{Field: n.t.text}, nil
+		return &fieldNode{Field: n.T.Text}, nil
 	}
-	return nil, errors.New("sqi: parse on unknown token: " + strconv.Itoa(int(n.t.tok)))
+	return nil, errors.New("sqi: parse on unknown token: " + strconv.Itoa(int(n.T.Tok)))
 }
 
 func (n *tree_node) makeBinary() (AstNode, AstNode, error) {
-	if len(n.children) != 2 {
-		return nil, nil, errors.New("sqi: parse path has wrong number of children: " + strconv.Itoa(len(n.children)))
+	if len(n.Children) != 2 {
+		return nil, nil, errors.New("sqi: parse binary has wrong number of children: " + strconv.Itoa(len(n.Children)))
 	}
-	lhs, err := n.children[0].asAst()
+	lhs, err := n.Children[0].asAst()
 	if err != nil {
 		return nil, nil, err
 	}
-	rhs, err := n.children[1].asAst()
+	rhs, err := n.Children[1].asAst()
 	if err != nil {
 		return nil, nil, err
 	}
 	return lhs, rhs, nil
 }
 
+func (n *tree_node) makeUnary() (AstNode, error) {
+	if len(n.Children) != 1 {
+		return nil, errors.New("sqi: parse unary has wrong number of children: " + strconv.Itoa(len(n.Children)))
+	}
+	return n.Children[0].asAst()
+}
+
 // getCtx() answers the context for this token, based on its position in the syntax tree.
 func (n *tree_node) getCtx() tree_ctx {
 	// Not sure how this will evolve, but currently only strings that are rhs of binaries have meaning.
-	if n.t.tok != string_token || n.parent == nil || len(n.parent.children) != 2 {
+	if n.T.Tok != string_token || n.Parent == nil || len(n.Parent.Children) != 2 {
 		return empty_tree_ctx
 	}
-	if !n.parent.isToken(string_capable_rhs...) {
+	if !n.Parent.isToken(string_capable_rhs...) {
 		return empty_tree_ctx
 	}
-	if n.parent.children[1] == n {
+	if n.Parent.Children[1] == n {
 		return string_tree_ctx
 	}
 	return empty_tree_ctx
@@ -129,7 +154,7 @@ func (n *tree_node) getCtx() tree_ctx {
 
 func (n *tree_node) isToken(tokens ...Token) bool {
 	for _, t := range tokens {
-		if n.t.tok == t {
+		if n.T.Tok == t {
 			return true
 		}
 	}

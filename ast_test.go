@@ -63,11 +63,15 @@ var (
 // BUILD
 
 func eql_n(lhs, rhs AstNode) AstNode {
-	return &binaryOpNode{Op: eql_token, Lhs: lhs, Rhs: rhs}
+	return &binaryNode{Op: eql_token, Lhs: lhs, Rhs: rhs}
 }
 
 func field_n(name string) AstNode {
 	return &fieldNode{Field: name}
+}
+
+func paren_n(child AstNode) AstNode {
+	return &unaryNode{Op: open_token, Child: child}
 }
 
 func path_n(lhs, rhs AstNode) AstNode {

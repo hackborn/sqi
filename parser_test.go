@@ -18,6 +18,9 @@ func TestParser(t *testing.T) {
 		{tokens(`Child`, `/`, `Name`), parser_want_1, nil},
 		{tokens(`Child`, `/`, `Arm`, `/`, `Length`), parser_want_2, nil},
 		{tokens(`Child`, `/`, `Name`, `==`, `a`), parser_want_3, nil},
+		{tokens(`(`, `Child`, `)`), parser_want_4, nil},
+		{tokens(`Child`, `/`, `(`, `Name`, `==`, `a`, `)`), parser_want_5, nil},
+		{tokens(`(`, `Child`, `/`, `Name`, `)`, `==`, `a`), parser_want_6, nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
@@ -38,6 +41,9 @@ var (
 	parser_want_1 = path_n(field_n(`Child`), field_n(`Name`))
 	parser_want_2 = path_n(field_n(`Child`), path_n(field_n(`Arm`), field_n(`Length`)))
 	parser_want_3 = path_n(field_n(`Child`), eql_n(field_n(`Name`), string_n(`a`)))
+	parser_want_4 = paren_n(field_n(`Child`))
+	parser_want_5 = path_n(field_n(`Child`), paren_n(eql_n(field_n(`Name`), string_n(`a`))))
+	parser_want_6 = eql_n(paren_n(path_n(field_n(`Child`), field_n(`Name`))), string_n(`a`))
 )
 
 // --------------------------------------------------------------------------------------

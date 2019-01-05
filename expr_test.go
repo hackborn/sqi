@@ -16,6 +16,7 @@ func TestExpr(t *testing.T) {
 		WantErr   error
 	}{
 		{`Child/Val`, expr_eval_input_0, `ca`, nil},
+		{`(Child/Val) == ca`, expr_eval_input_0, true, nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
@@ -37,4 +38,5 @@ func TestExpr(t *testing.T) {
 
 var (
 	expr_eval_input_0 = &Parent{Child: Child{"ca"}}
+	expr_eval_input_1 = &Parent{Child: Child{"ca"}}
 )

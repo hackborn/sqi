@@ -55,19 +55,19 @@ func (n *fieldNode) runOnValue(v reflect.Value) (interface{}, error) {
 }
 
 // ------------------------------------------------------------
-// BINARY-OP-NODE
+// BINARY-NODE
 
-// binaryOpNode performs binary operations on the current interface{}.
-type binaryOpNode struct {
+// binaryNode performs binary operations on the current interface{}.
+type binaryNode struct {
 	Op  Token
 	Lhs AstNode
 	Rhs AstNode
 }
 
-func (n *binaryOpNode) Run(_i interface{}) (interface{}, error) {
-	//	fmt.Println("Run binaryOpNode", n.lhs, n.rhs)
+func (n *binaryNode) Run(_i interface{}) (interface{}, error) {
+	//	fmt.Println("Run binaryNode", n.lhs, n.rhs)
 	if !(n.Op > start_binary && n.Op < end_binary) || n.Lhs == nil || n.Rhs == nil {
-		return nil, errors.New("Invalid binary")
+		return nil, errors.New("sqi: invalid binary")
 	}
 	// Every item in _i that has a Lhs matching Rhs is included.
 	// We need to distinguish between slices, arrays, and single items
@@ -89,15 +89,14 @@ func (n *binaryOpNode) Run(_i interface{}) (interface{}, error) {
 		return dst.Interface(), nil
 	case reflect.Array:
 		fmt.Println(n.Lhs, "is an array with element type", rt.Elem())
-		return nil, errors.New("Unhandled binaryOpNode.Run() on reflect.Array")
+		return nil, errors.New("sqi: Unhandled binaryNode.Run() on reflect.Array")
 	default:
-		fmt.Println(n.Lhs, "is something else entirely")
-		return nil, errors.New("Unhandled binaryOpNode.Run() on default")
+		return n.runEquals(_i)
 	}
 	return _i, nil
 }
 
-func (n *binaryOpNode) runEquals(_i interface{}) (bool, error) {
+func (n *binaryNode) runEquals(_i interface{}) (bool, error) {
 	lhs, err := n.Lhs.Run(_i)
 	if err != nil {
 		return false, err
@@ -144,6 +143,23 @@ func (n *stringNode) Run(_i interface{}) (interface{}, error) {
 	return n.Value, nil
 }
 
+// ------------------------------------------------------------
+// UNARY-NODE
+
+// unaryNode performs a unary operation on the current interface{}.
+type unaryNode struct {
+	Op    Token
+	Child AstNode
+}
+
+func (n *unaryNode) Run(_i interface{}) (interface{}, error) {
+	//	fmt.Println("Run unaryNode", n.Child)
+	if n.Child == nil {
+		return nil, errors.New("Invalid unary")
+	}
+	return n.Child.Run(_i)
+}
+
 // ----------------------------------------
 // MISC
 
@@ -152,6 +168,3 @@ func clone(i interface{}) interface{} {
 	// Wrap argument to reflect.Value, dereference it and return back as interface{}
 	return reflect.Indirect(reflect.ValueOf(i)).Interface()
 }
-
-// ----------------------------------------
-// CONST and VAR

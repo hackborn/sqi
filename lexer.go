@@ -9,13 +9,6 @@ import (
 // scan() converts a string into tokens.
 func scan(input string) ([]token_t, error) {
 	var lexer scanner.Scanner
-	//	src := `Links FromNode == ".pipe line"`
-	//	src := `Links FromNode == ".pipe line" && ToNode == ".poof"`
-	// src := `Links (FromNode == ".pipe line" && ToNode == ".poof")`
-	//src := `Links (FromNode == ".pipe line" && ToNode == ".poof") [0:-1,10,11] FromPin = "ds"`
-	//	src := `Links (FromNode == ".pipe line" && ToNode == ".poof") [0:-1,10,11] FromPin="sds"`
-	//	src := `Links (FromNode == ".pipe line" && ToNode == ".poof") [0:-1,10,11] FromPin = "sds"`
-	//src := `10-11`
 	lexer.Init(strings.NewReader(input))
 	// lexer.Whitespace = 1<<'\r' | 1<<'\t'
 	lexer.Whitespace = 0
@@ -100,8 +93,8 @@ func (r *ident_runer) flush() {
 // TOKEN_T
 
 type token_t struct {
-	tok  Token
-	text string
+	Tok  Token
+	Text string
 }
 
 // reclassify() converts this token into one of the defined
@@ -109,17 +102,25 @@ type token_t struct {
 // in the scanning stage, but I'm not sure how to get the
 // scanner to do that.
 func (t token_t) reclassify() token_t {
-	if t.tok != string_token {
+	if t.Tok != string_token {
 		return t
 	}
-	if found, ok := keywords[t.text]; ok {
-		return token_t{found, t.text}
+	if found, ok := keywords[t.Text]; ok {
+		return token_t{found, t.Text}
 	}
 	return t
 }
 
 func (t token_t) isBinary() bool {
-	return t.tok > start_binary && t.tok < end_binary
+	return t.Tok > start_binary && t.Tok < end_binary
+}
+
+func (t token_t) isOpenParen() bool {
+	return t.Tok == open_token
+}
+
+func (t token_t) isCloseParen() bool {
+	return t.Tok == close_token
 }
 
 // ----------------------------------------
