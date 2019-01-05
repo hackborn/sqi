@@ -35,10 +35,10 @@ func scan(input string) ([]token_t, error) {
 			runer.addToken(token_t{int_token, lexer.TokenText()})
 		case scanner.Ident:
 			runer.flush()
-			runer.addToken(token_t{string_token, lexer.TokenText()})
+			runer.addString(lexer.TokenText())
 		case scanner.String:
 			runer.flush()
-			runer.addToken(token_t{string_token, lexer.TokenText()})
+			runer.addString(lexer.TokenText())
 		case ' ', '\r', '\t', '\n': // whitespace
 			runer.flush()
 		case scanner.Comment:
@@ -77,12 +77,23 @@ func (r *ident_runer) isIdentRune(ch rune, i int) bool {
 	return systemident
 }
 
+func (r *ident_runer) addString(s string) {
+	r.addToken(token_t{string_token, s})
+}
+
 func (r *ident_runer) addToken(t token_t) {
 	r.tokens = append(r.tokens, t)
 }
 
 func (r *ident_runer) accumulate(ch rune) {
-	r.accum = append(r.accum, ch)
+	// Single-character tokens are directly added
+	switch ch {
+	case '/':
+		r.flush()
+		r.addString(string(ch))
+	default:
+		r.accum = append(r.accum, ch)
+	}
 }
 
 func (r *ident_runer) flush() {
