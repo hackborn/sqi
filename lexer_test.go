@@ -37,24 +37,7 @@ func TestLexer(t *testing.T) {
 }
 
 // --------------------------------------------------------------------------------------
-// COMPARE
-
-func tokensMatch(a, b []token_t) bool {
-	if len(a) != len(b) {
-		return false
-	} else if len(a) < 1 {
-		return true
-	}
-	for i, t := range a {
-		if b[i] != t {
-			return false
-		}
-	}
-	return true
-}
-
-// --------------------------------------------------------------------------------------
-// CONVENIENCES
+// BUILD
 
 func tokens(all ...interface{}) []token_t {
 	var tokens []token_t
@@ -69,6 +52,19 @@ func tokens(all ...interface{}) []token_t {
 	return tokens
 }
 
-func str_t(s string) token_t {
-	return token_t{string_token, s}
+// --------------------------------------------------------------------------------------
+// COMPARE
+
+func tokensMatch(a, b []token_t) bool {
+	if len(a) != len(b) {
+		return false
+	} else if len(a) < 1 {
+		return true
+	}
+	for i, t := range a {
+		if b[i] != t {
+			return false
+		}
+	}
+	return true
 }

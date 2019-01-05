@@ -64,7 +64,7 @@ func (r *ident_runer) isIdentRune(ch rune, i int) bool {
 	// This is identical to the text scanner default. I would like the
 	// scanner to smartly identify "&&" "==" etc as separate tokens, even
 	// when there's no whitespace separating them from idents, but I can't
-	// see any way the scanner woiuld support that behaviour.
+	// see any way the scanner would support that behaviour.
 	systemident := ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
 	return systemident
 }
@@ -136,6 +136,9 @@ const (
 	// Assignment
 	assign_token // =
 
+	// Building
+	path_token // /
+
 	// Comparison
 	eql_token // ==
 	neq_token // !=
@@ -152,6 +155,7 @@ const (
 var (
 	keywords = map[string]Token{
 		`=`:  assign_token,
+		`/`:  path_token,
 		`==`: eql_token,
 		`!=`: neq_token,
 		`&&`: and_token,

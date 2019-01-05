@@ -19,19 +19,19 @@ type AstNode interface {
 
 // fieldNode is used to select a field from the current interface{}.
 type fieldNode struct {
-	field string
+	Field string
 }
 
 func (n *fieldNode) Run(_i interface{}) (interface{}, error) {
 	//	fmt.Println("Run fieldNode", n.field)
-	if len(n.field) < 1 {
+	if len(n.Field) < 1 {
 		return nil, errors.New("Missing fieled select")
 	}
 	var child interface{}
 	var err error
 	switch t := _i.(type) {
 	case map[string]interface{}:
-		child = t[n.field]
+		child = t[n.Field]
 	case reflect.Value:
 		return nil, errors.New("Internal error: fieldNode must not receive reflect.Value")
 		//		child, err = n.runOnValue(t)
@@ -48,11 +48,11 @@ func (n *fieldNode) Run(_i interface{}) (interface{}, error) {
 }
 
 func (n *fieldNode) runOnValue(v reflect.Value) (interface{}, error) {
-	f := v.FieldByName(n.field)
+	f := v.FieldByName(n.Field)
 	if f.IsValid() {
 		return f, nil
 	}
-	return nil, errors.New("No field for " + n.field)
+	return nil, errors.New("No field for " + n.Field)
 }
 
 // ------------------------------------------------------------
@@ -60,14 +60,14 @@ func (n *fieldNode) runOnValue(v reflect.Value) (interface{}, error) {
 
 // binaryOpNode performs binary operations on the current interface{}.
 type binaryOpNode struct {
-	op  string
-	lhs string
-	rhs string
+	Op  string
+	Lhs string
+	Rhs string
 }
 
 func (n *binaryOpNode) Run(_i interface{}) (interface{}, error) {
 	//	fmt.Println("Run binaryOpNode", n.lhs, n.rhs)
-	if len(n.op) < 1 || len(n.lhs) < 1 || len(n.rhs) < 1 {
+	if len(n.Op) < 1 || len(n.Lhs) < 1 || len(n.Rhs) < 1 {
 		return nil, errors.New("Invalid binary")
 	}
 	// Every item in _i that has a Lhs matching Rhs is included.
@@ -89,10 +89,10 @@ func (n *binaryOpNode) Run(_i interface{}) (interface{}, error) {
 		}
 		return dst.Interface(), nil
 	case reflect.Array:
-		fmt.Println(n.lhs, "is an array with element type", rt.Elem())
+		fmt.Println(n.Lhs, "is an array with element type", rt.Elem())
 		return nil, errors.New("Unhandled binaryOpNode.Run() on reflect.Array")
 	default:
-		fmt.Println(n.lhs, "is something else entirely")
+		fmt.Println(n.Lhs, "is something else entirely")
 		return nil, errors.New("Unhandled binaryOpNode.Run() on default")
 	}
 	return _i, nil
@@ -100,13 +100,13 @@ func (n *binaryOpNode) Run(_i interface{}) (interface{}, error) {
 
 func (n *binaryOpNode) runEquals(_i interface{}) (bool, error) {
 	iv := reflect.Indirect(reflect.ValueOf(_i)).Interface()
-	fs := &fieldNode{field: n.lhs}
+	fs := &fieldNode{Field: n.Lhs}
 	_v, err := fs.Run(iv)
 	if err != nil {
 		return false, err
 	}
 	if v, ok := _v.(string); ok {
-		return v == n.rhs, nil
+		return v == n.Rhs, nil
 	}
 	return false, nil
 }
@@ -116,20 +116,20 @@ func (n *binaryOpNode) runEquals(_i interface{}) (bool, error) {
 
 // pathNode combines two expressions.
 type pathNode struct {
-	lhs AstNode
-	rhs AstNode
+	Lhs AstNode
+	Rhs AstNode
 }
 
 func (n *pathNode) Run(_i interface{}) (interface{}, error) {
 	//	fmt.Println("Run pathNode", n.lhs, n.rhs)
-	if n.lhs == nil || n.rhs == nil {
+	if n.Lhs == nil || n.Rhs == nil {
 		return nil, errors.New("Invalid path")
 	}
-	ans, err := n.lhs.Run(_i)
+	ans, err := n.Lhs.Run(_i)
 	if err != nil {
 		return nil, err
 	}
-	return n.rhs.Run(ans)
+	return n.Rhs.Run(ans)
 }
 
 // ----------------------------------------

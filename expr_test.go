@@ -44,19 +44,19 @@ func runTestExprGet(t *testing.T, input interface{}, expr AstNode, want_resp int
 
 var (
 	expr_get_input_0 = Child{Val: "a"}
-	expr_get_expr_0  = &fieldNode{field: "Val"}
+	expr_get_expr_0  = &fieldNode{Field: "Val"}
 
 	expr_get_input_1 = &Parent{Child: Child{"ca"}}
-	expr_get_expr_1  = &fieldNode{field: "Child"}
+	expr_get_expr_1  = &fieldNode{Field: "Child"}
 
 	expr_get_input_2 = &MultiParent{Children: []Child{Child{"ca"}, Child{"cb"}}}
-	expr_get_expr_2  = &fieldNode{field: "Children"}
+	expr_get_expr_2  = &fieldNode{Field: "Children"}
 
 	expr_get_input_3 = &MultiParent{Children: []Child{Child{"ca"}, Child{"cb"}, Child{"cc"}}}
-	expr_get_expr_3  = &pathNode{lhs: children_node, rhs: get_val_cb_node}
+	expr_get_expr_3  = &pathNode{Lhs: children_node, Rhs: get_val_cb_node}
 
-	children_node   = &fieldNode{field: "Children"}
-	get_val_cb_node = &binaryOpNode{op: "==", lhs: "Val", rhs: "cb"}
+	children_node   = &fieldNode{Field: "Children"}
+	get_val_cb_node = &binaryOpNode{Op: "==", Lhs: "Val", Rhs: "cb"}
 )
 
 // --------------------------------------------------------------------------------------
