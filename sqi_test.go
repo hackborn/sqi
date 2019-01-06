@@ -180,9 +180,9 @@ var (
 type Person struct {
 	Name     string    `json:"Name,omitempty"`     // Test a single value string
 	Age      int       `json:"Age,omitempty"`      // Test a single value int
-	Mom      Relative  `json:"Mom,omitempty"`      // Test a reference field
-	Children []Person  `json:"Children,omitempty"` // Test a pointer collection
-	Friends  []*Person `json:"Friends,omitempty"`  // Test a reference collection
+	Mom      Relative  `json:"Mom,omitempty"`      // Test a value field
+	Children []Person  `json:"Children,omitempty"` // Test a value collection
+	Friends  []*Person `json:"Friends,omitempty"`  // Test a pointer collection
 }
 
 // MarshalJSON() is only necessary because go randomizes the fields.
