@@ -157,6 +157,10 @@ func TestExpr(t *testing.T) {
 		{`(Mom/Name) == Ana`, expr_eval_input_1, Opt{}, true, nil},
 		// Make sure quotes are removed
 		{`Name == "Ana Belle"`, expr_eval_input_2, Opt{}, true, nil},
+		// Test strictness -- by default strict is off, and incompatibile comparisons result in false.
+		{`Name == 22`, expr_eval_input_3, Opt{Strict: false}, false, nil},
+		// Test strictness -- if strict is on, report error with incompoatible comparisons.
+		{`Name == 22`, expr_eval_input_3, Opt{Strict: true}, false, MismatchErr},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
@@ -168,7 +172,7 @@ func TestExpr(t *testing.T) {
 			if !errorMatches(have_err, tc.WantErr) {
 				fmt.Println("Error mismatch, have\n", have_err, "\nwant\n", tc.WantErr)
 				t.Fatal()
-			} else if !interfacesEqual(have_resp, tc.WantResp) {
+			} else if !interfaceMatches(have_resp, tc.WantResp) {
 				fmt.Println("Response mismatch, have\n", toJsonString(have_resp), "\nwant\n", toJsonString(tc.WantResp))
 				t.Fatal()
 			}
@@ -180,6 +184,7 @@ var (
 	expr_eval_input_0 = &Person{Mom: Relative{Name: "Ana Belle"}}
 	expr_eval_input_1 = &Person{Mom: Relative{Name: "Ana"}}
 	expr_eval_input_2 = &Person{Name: "Ana Belle"}
+	expr_eval_input_3 = &Person{Name: "Ana"}
 )
 
 // ------------------------------------------------------------
@@ -312,6 +317,12 @@ func errorMatches(a, b error) bool {
 		return true
 	} else if a == nil || b == nil {
 		return false
+	}
+	// Internal error class only needs to match to the type
+	aerr, aok := a.(*SqiError)
+	berr, bok := b.(*SqiError)
+	if aok && bok {
+		return aerr.code == berr.code
 	}
 	return a.Error() == b.Error()
 }

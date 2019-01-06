@@ -41,4 +41,7 @@ func EvalStringWith(term string, input interface{}, errorval string, opt Opt) st
 
 // Opt contains options for evaluation.
 type Opt struct {
+	// Strict causes sloppy conditions to become errors. For example, comparing a
+	// number to a string is false if strict is off, but error if it's on.
+	Strict bool
 }

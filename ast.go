@@ -67,7 +67,10 @@ func (n *binaryNode) runEquals(_i interface{}, opt *Opt) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	eq := interfacesEqual(lhs, rhs)
+	eq, err := interfacesEqual(lhs, rhs)
+	if err != nil && opt != nil && opt.Strict {
+		return false, err
+	}
 	return eq, nil
 }
 

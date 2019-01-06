@@ -2,38 +2,44 @@ package sqi
 
 import (
 	"math"
+	"reflect"
 )
 
 // interfacesEqual() answers true if both interfaces are the same underlying data.
-func interfacesEqual(a, b interface{}) bool {
+func interfacesEqual(a, b interface{}) (bool, error) {
 	if a == nil && b == nil {
-		return true
+		return true, nil
 	} else if a == nil || b == nil {
-		return false
+		return false, nil
 	}
 	switch at := a.(type) {
 	case bool:
 		if bt, ok := b.(bool); ok {
-			return at == bt
+			return at == bt, nil
 		}
+		return false, NewMismatchError("types " + reflect.TypeOf(a).Name() + " and " + reflect.TypeOf(b).Name())
 	case string:
 		if bt, ok := b.(string); ok {
-			return at == bt
+			return at == bt, nil
 		}
+		return false, NewMismatchError("types " + reflect.TypeOf(a).Name() + " and " + reflect.TypeOf(b).Name())
 	case int:
 		if bt, ok := b.(int); ok {
-			return at == bt
+			return at == bt, nil
 		}
+		return false, NewMismatchError("types " + reflect.TypeOf(a).Name() + " and " + reflect.TypeOf(b).Name())
 	case float32:
 		if bt, ok := b.(float32); ok {
-			return float64Equal(float64(at), float64(bt))
+			return float64Equal(float64(at), float64(bt)), nil
 		}
+		return false, NewMismatchError("types " + reflect.TypeOf(a).Name() + " and " + reflect.TypeOf(b).Name())
 	case float64:
 		if bt, ok := b.(float64); ok {
-			return float64Equal(at, bt)
+			return float64Equal(at, bt), nil
 		}
+		return false, NewMismatchError("types " + reflect.TypeOf(a).Name() + " and " + reflect.TypeOf(b).Name())
 	}
-	return false
+	return false, NewUnhandledError("type " + reflect.TypeOf(a).Name())
 }
 
 // ------------------------------------------------------------
