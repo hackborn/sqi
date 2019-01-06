@@ -11,7 +11,9 @@ import (
 
 // AstNode defines the basic interface for evaluating expressions.
 type AstNode interface {
-	Run(interface{}) (interface{}, error)
+	// Evaluate the interface, returning the results. This is intended
+	// to  be only an internal API: the Opt* is a pointer but can not be nil.
+	Eval(interface{}, *Opt) (interface{}, error)
 }
 
 // ------------------------------------------------------------
@@ -24,8 +26,8 @@ type binaryNode struct {
 	Rhs AstNode
 }
 
-func (n *binaryNode) Run(_i interface{}) (interface{}, error) {
-	//	fmt.Println("Run binaryNode", n.lhs, n.rhs)
+func (n *binaryNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
+	//	fmt.Println("Eval binaryNode", n.lhs, n.rhs)
 	if !(n.Op > start_binary && n.Op < end_binary) || n.Lhs == nil || n.Rhs == nil {
 		return nil, errors.New("sqi: invalid binary")
 	}
@@ -38,7 +40,7 @@ func (n *binaryNode) Run(_i interface{}) (interface{}, error) {
 		dst := reflect.MakeSlice(rt, 0, src.Len())
 		for i := 0; i < src.Len(); i++ {
 			item := src.Index(i)
-			b, err := n.runEquals(item.Interface())
+			b, err := n.runEquals(item.Interface(), opt)
 			if err != nil {
 				return nil, err
 			}
@@ -51,17 +53,17 @@ func (n *binaryNode) Run(_i interface{}) (interface{}, error) {
 		fmt.Println(n.Lhs, "is an array with element type", rt.Elem())
 		return nil, errors.New("sqi: Unhandled binaryNode.Run() on reflect.Array")
 	default:
-		return n.runEquals(_i)
+		return n.runEquals(_i, opt)
 	}
 	return _i, nil
 }
 
-func (n *binaryNode) runEquals(_i interface{}) (bool, error) {
-	lhs, err := n.Lhs.Run(_i)
+func (n *binaryNode) runEquals(_i interface{}, opt *Opt) (bool, error) {
+	lhs, err := n.Lhs.Eval(_i, opt)
 	if err != nil {
 		return false, err
 	}
-	rhs, err := n.Rhs.Run(_i)
+	rhs, err := n.Rhs.Eval(_i, opt)
 	if err != nil {
 		return false, err
 	}
@@ -77,8 +79,8 @@ type constantNode struct {
 	Value interface{}
 }
 
-func (n *constantNode) Run(_i interface{}) (interface{}, error) {
-	//	fmt.Println("Run constantNode", n.Value)
+func (n *constantNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
+	//	fmt.Println("Evak constantNode", n.Value)
 	return n.Value, nil
 }
 
@@ -90,8 +92,8 @@ type fieldNode struct {
 	Field string
 }
 
-func (n *fieldNode) Run(_i interface{}) (interface{}, error) {
-	//	fmt.Println("Run fieldNode", n.field)
+func (n *fieldNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
+	//	fmt.Println("Eval fieldNode", n.field)
 	if len(n.Field) < 1 {
 		return nil, errors.New("Missing fieled select")
 	}
@@ -131,16 +133,16 @@ type pathNode struct {
 	Rhs AstNode
 }
 
-func (n *pathNode) Run(_i interface{}) (interface{}, error) {
-	//	fmt.Println("Run pathNode", n.lhs, n.rhs)
+func (n *pathNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
+	//	fmt.Println("Eval pathNode", n.lhs, n.rhs)
 	if n.Lhs == nil || n.Rhs == nil {
 		return nil, errors.New("Invalid path")
 	}
-	ans, err := n.Lhs.Run(_i)
+	ans, err := n.Lhs.Eval(_i, opt)
 	if err != nil {
 		return nil, err
 	}
-	return n.Rhs.Run(ans)
+	return n.Rhs.Eval(ans, opt)
 }
 
 // ------------------------------------------------------------
@@ -152,12 +154,12 @@ type unaryNode struct {
 	Child AstNode
 }
 
-func (n *unaryNode) Run(_i interface{}) (interface{}, error) {
-	//	fmt.Println("Run unaryNode", n.Child)
+func (n *unaryNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
+	//	fmt.Println("Eval unaryNode", n.Child)
 	if n.Child == nil {
 		return nil, errors.New("Invalid unary")
 	}
-	return n.Child.Run(_i)
+	return n.Child.Eval(_i, opt)
 }
 
 // ----------------------------------------

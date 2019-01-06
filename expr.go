@@ -9,7 +9,7 @@ import (
 
 // Expr is an interface for anything that can evaluate input.
 type Expr interface {
-	Eval(interface{}) (interface{}, error)
+	Eval(interface{}, *Opt) (interface{}, error)
 }
 
 // MakeExpr() converts an expression string into an evaluatable object.
@@ -32,9 +32,9 @@ type expr_t struct {
 	ast AstNode
 }
 
-func (e *expr_t) Eval(input interface{}) (interface{}, error) {
+func (e *expr_t) Eval(input interface{}, opt *Opt) (interface{}, error) {
 	if e.ast == nil {
 		return nil, errors.New("Missing AST")
 	}
-	return e.ast.Run(input)
+	return e.ast.Eval(input, opt)
 }

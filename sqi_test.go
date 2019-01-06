@@ -93,25 +93,26 @@ func TestAstGet(t *testing.T) {
 	cases := []struct {
 		Input    interface{}
 		Expr     AstNode
+		Opts     Opt
 		WantResp interface{}
 		WantErr  error
 	}{
-		{ast_get_input_0, ast_get_expr_0, "a", nil},
-		{ast_get_input_1, ast_get_expr_1, Relative{Name: "ca"}, nil},
-		{ast_get_input_2, ast_get_expr_2, []Person{Person{Name: "ca"}, Person{Name: "cb"}}, nil},
-		{ast_get_input_3, ast_get_expr_3, []Person{Person{Name: "cb"}}, nil},
+		{ast_get_input_0, ast_get_expr_0, Opt{}, "a", nil},
+		{ast_get_input_1, ast_get_expr_1, Opt{}, Relative{Name: "ca"}, nil},
+		{ast_get_input_2, ast_get_expr_2, Opt{}, []Person{Person{Name: "ca"}, Person{Name: "cb"}}, nil},
+		{ast_get_input_3, ast_get_expr_3, Opt{}, []Person{Person{Name: "cb"}}, nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			runTestAstGet(t, tc.Input, tc.Expr, tc.WantResp, tc.WantErr)
+			runTestAstGet(t, tc.Input, tc.Expr, tc.Opts, tc.WantResp, tc.WantErr)
 			// Everything that works on the struct variant should work on the unmarshalled json.
-			runTestAstGet(t, toJson(tc.Input), tc.Expr, tc.WantResp, tc.WantErr)
+			runTestAstGet(t, toJson(tc.Input), tc.Expr, tc.Opts, tc.WantResp, tc.WantErr)
 		})
 	}
 }
 
-func runTestAstGet(t *testing.T, input interface{}, expr AstNode, want_resp interface{}, want_err error) {
-	have_resp, have_err := expr.Run(input)
+func runTestAstGet(t *testing.T, input interface{}, expr AstNode, opt Opt, want_resp interface{}, want_err error) {
+	have_resp, have_err := expr.Eval(input, &opt)
 	if !errorMatches(have_err, want_err) {
 		fmt.Println("Error mismatch, have\n", have_err, "\nwant\n", want_err)
 		t.Fatal()
@@ -141,15 +142,21 @@ var (
 // ------------------------------------------------------------
 // TEST-EXPR
 
+// TestExpr() runs tests on the full system. It is technically
+// unneeded, since the individual pieces have all been tested,
+// but I use it for easier-to-read high-level tests.
 func TestExpr(t *testing.T) {
 	cases := []struct {
 		TermInput string
 		EvalInput interface{}
+		Opts      Opt
 		WantResp  interface{}
 		WantErr   error
 	}{
-		{`Mom/Name`, expr_eval_input_0, `Ana`, nil},
-		{`(Mom/Name) == Ana`, expr_eval_input_1, true, nil},
+		{`Mom/Name`, expr_eval_input_0, Opt{}, `Ana Belle`, nil},
+		{`(Mom/Name) == Ana`, expr_eval_input_1, Opt{}, true, nil},
+		// Make sure quotes are removed
+		{`Name == "Ana Belle"`, expr_eval_input_2, Opt{}, true, nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
@@ -157,7 +164,7 @@ func TestExpr(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			have_resp, have_err := expr.Eval(tc.EvalInput)
+			have_resp, have_err := expr.Eval(tc.EvalInput, &tc.Opts)
 			if !errorMatches(have_err, tc.WantErr) {
 				fmt.Println("Error mismatch, have\n", have_err, "\nwant\n", tc.WantErr)
 				t.Fatal()
@@ -170,8 +177,9 @@ func TestExpr(t *testing.T) {
 }
 
 var (
-	expr_eval_input_0 = &Person{Mom: Relative{Name: "Ana"}}
+	expr_eval_input_0 = &Person{Mom: Relative{Name: "Ana Belle"}}
 	expr_eval_input_1 = &Person{Mom: Relative{Name: "Ana"}}
+	expr_eval_input_2 = &Person{Name: "Ana Belle"}
 )
 
 // ------------------------------------------------------------

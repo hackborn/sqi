@@ -3,6 +3,7 @@ package sqi
 import (
 	"errors"
 	"strconv"
+	"strings"
 )
 
 // parse() converts tokens into an AST.
@@ -123,12 +124,14 @@ func (n *tree_node) asAst() (AstNode, error) {
 		if len(n.Children) != 0 {
 			return nil, errors.New("sqi: parse string has wrong number of children: " + strconv.Itoa(len(n.Children)))
 		}
+		// Unwrap quoted text, which has served its purpose of allowing special characters.
+		text := strings.Trim(n.T.Text, `"`)
 		// There are rules on strings -- based on context I can be either a field or string node
 		ctx := n.getCtx()
 		if ctx == string_tree_ctx {
-			return &constantNode{Value: n.T.Text}, nil
+			return &constantNode{Value: text}, nil
 		}
-		return &fieldNode{Field: n.T.Text}, nil
+		return &fieldNode{Field: text}, nil
 	}
 	return nil, errors.New("sqi: parse on unknown token: " + strconv.Itoa(int(n.T.Tok)))
 }
