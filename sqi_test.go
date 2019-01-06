@@ -1,6 +1,7 @@
 package sqi
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -16,7 +17,7 @@ func TestLexer(t *testing.T) {
 		WantResp []token_t
 		WantErr  error
 	}{
-		{`(Child)`, tokens(`(`, `Child`, `)`), nil},
+		{`Child`, tokens(`Child`), nil},
 		{`(Child)`, tokens(`(`, `Child`, `)`), nil},
 		{`Child/Name`, tokens(`Child`, `/`, `Name`), nil},
 		{`Child		/	Name`, tokens(`Child`, `/`, `Name`), nil},
@@ -96,9 +97,9 @@ func TestAstGet(t *testing.T) {
 		WantErr  error
 	}{
 		{ast_get_input_0, ast_get_expr_0, "a", nil},
-		{ast_get_input_1, ast_get_expr_1, Child{"ca"}, nil},
-		{ast_get_input_2, ast_get_expr_2, []Child{Child{"ca"}, Child{"cb"}}, nil},
-		{ast_get_input_3, ast_get_expr_3, []Child{Child{"cb"}}, nil},
+		{ast_get_input_1, ast_get_expr_1, Relative{Name: "ca"}, nil},
+		{ast_get_input_2, ast_get_expr_2, []Person{Person{Name: "ca"}, Person{Name: "cb"}}, nil},
+		{ast_get_input_3, ast_get_expr_3, []Person{Person{Name: "cb"}}, nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
@@ -111,7 +112,6 @@ func TestAstGet(t *testing.T) {
 
 func runTestAstGet(t *testing.T, input interface{}, expr AstNode, want_resp interface{}, want_err error) {
 	have_resp, have_err := expr.Run(input)
-	// fmt.Println("have_resp", have_resp, "have_err", have_err)
 	if !errorMatches(have_err, want_err) {
 		fmt.Println("Error mismatch, have\n", have_err, "\nwant\n", want_err)
 		t.Fatal()
@@ -122,20 +122,20 @@ func runTestAstGet(t *testing.T, input interface{}, expr AstNode, want_resp inte
 }
 
 var (
-	ast_get_input_0 = Child{Val: "a"}
-	ast_get_expr_0  = field_n("Val")
+	ast_get_input_0 = Person{Name: "a"}
+	ast_get_expr_0  = field_n("Name")
 
-	ast_get_input_1 = &Parent{Child: Child{"ca"}}
-	ast_get_expr_1  = field_n("Child")
+	ast_get_input_1 = &Person{Mom: Relative{Name: "ca"}}
+	ast_get_expr_1  = field_n("Mom")
 
-	ast_get_input_2 = &MultiParent{Children: []Child{Child{"ca"}, Child{"cb"}}}
+	ast_get_input_2 = &Person{Children: []Person{Person{Name: "ca"}, Person{Name: "cb"}}}
 	ast_get_expr_2  = field_n("Children")
 
-	ast_get_input_3 = &MultiParent{Children: []Child{Child{"ca"}, Child{"cb"}, Child{"cc"}}}
-	ast_get_expr_3  = path_n(children_node, get_val_cb_node)
+	ast_get_input_3 = &Person{Children: []Person{Person{Name: "ca"}, Person{Name: "cb"}, Person{Name: "cc"}}}
+	ast_get_expr_3  = path_n(children_node, get_name_cb_node)
 
-	children_node   = field_n("Children")
-	get_val_cb_node = eql_n(field_n("Val"), string_n("cb"))
+	children_node    = field_n("Children")
+	get_name_cb_node = eql_n(field_n("Name"), string_n("cb"))
 )
 
 // --------------------------------------------------------------------------------------
@@ -148,8 +148,8 @@ func TestExpr(t *testing.T) {
 		WantResp  interface{}
 		WantErr   error
 	}{
-		{`Child/Val`, expr_eval_input_0, `ca`, nil},
-		{`(Child/Val) == ca`, expr_eval_input_0, true, nil},
+		{`Mom/Name`, expr_eval_input_0, `Ana`, nil},
+		{`(Mom/Name) == Ana`, expr_eval_input_1, true, nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
@@ -170,31 +170,77 @@ func TestExpr(t *testing.T) {
 }
 
 var (
-	expr_eval_input_0 = &Parent{Child: Child{"ca"}}
-	expr_eval_input_1 = &Parent{Child: Child{"ca"}}
+	expr_eval_input_0 = &Person{Mom: Relative{Name: "Ana"}}
+	expr_eval_input_1 = &Person{Mom: Relative{Name: "Ana"}}
 )
 
 // --------------------------------------------------------------------------------------
 // MODEL
 
-type Child struct {
-	Val string `json:"Val,omitempty"`
+type Person struct {
+	Name     string    `json:"Name,omitempty"`     // Test a single value string
+	Age      int       `json:"Age,omitempty"`      // Test a single value int
+	Mom      Relative  `json:"Mom,omitempty"`      // Test a reference field
+	Children []Person  `json:"Children,omitempty"` // Test a pointer collection
+	Friends  []*Person `json:"Friends,omitempty"`  // Test a reference collection
 }
 
-type Parent struct {
-	Child Child `json:"Child,omitempty"`
+// MarshalJSON() is only necessary because go randomizes the fields.
+func (p *Person) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+
+	type pair_t struct {
+		Key   interface{}
+		Value interface{}
+	}
+	// XXX I'm not actually using the json metadata names but I should be.
+	ordered := []pair_t{}
+	if p.Name != "" {
+		ordered = append(ordered, pair_t{"Name", p.Name})
+	}
+	if p.Age != 0 {
+		ordered = append(ordered, pair_t{"Age", p.Age})
+	}
+	if !p.Mom.Empty() {
+		ordered = append(ordered, pair_t{"Mom", p.Mom})
+	}
+	if len(p.Children) > 0 {
+		ordered = append(ordered, pair_t{"Children", p.Children})
+	}
+	if len(p.Friends) > 0 {
+		ordered = append(ordered, pair_t{"Friends", p.Friends})
+	}
+
+	buf.WriteString("{")
+	for i, kv := range ordered {
+		if i != 0 {
+			buf.WriteString(",")
+		}
+		// marshal key
+		key, err := json.Marshal(kv.Key)
+		if err != nil {
+			return nil, err
+		}
+		buf.Write(key)
+		buf.WriteString(":")
+		// marshal value
+		val, err := json.Marshal(kv.Value)
+		if err != nil {
+			return nil, err
+		}
+		buf.Write(val)
+	}
+
+	buf.WriteString("}")
+	return buf.Bytes(), nil
 }
 
-type ParentPtr struct {
-	Child *Child `json:"Child,omitempty"`
+type Relative struct {
+	Name string `json:"Name,omitempty"`
 }
 
-type MultiParent struct {
-	Children []Child `json:"Children,omitempty"`
-}
-
-type MultiParentPtr struct {
-	Children []*Child `json:"Children,omitempty"`
+func (r Relative) Empty() bool {
+	return r.Name == ""
 }
 
 // --------------------------------------------------------------------------------------
