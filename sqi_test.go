@@ -277,11 +277,11 @@ func field_n(name string) AstNode {
 }
 
 func float_n(value float64) AstNode {
-	return &floatNode{Value: value}
+	return &constantNode{Value: value}
 }
 
 func int_n(value int) AstNode {
-	return &intNode{Value: value}
+	return &constantNode{Value: value}
 }
 
 func paren_n(child AstNode) AstNode {
@@ -293,7 +293,7 @@ func path_n(lhs, rhs AstNode) AstNode {
 }
 
 func string_n(value string) AstNode {
-	return &stringNode{Value: value}
+	return &constantNode{Value: value}
 }
 
 // ------------------------------------------------------------

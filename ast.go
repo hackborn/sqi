@@ -70,6 +70,19 @@ func (n *binaryNode) runEquals(_i interface{}) (bool, error) {
 }
 
 // ------------------------------------------------------------
+// CONSTANT-NODE
+
+// constantNode returns a constant value (string, float, etc.).
+type constantNode struct {
+	Value interface{}
+}
+
+func (n *constantNode) Run(_i interface{}) (interface{}, error) {
+	//	fmt.Println("Run constantNode", n.Value)
+	return n.Value, nil
+}
+
+// ------------------------------------------------------------
 // FIELD-NODE
 
 // fieldNode is used to select a field from the current interface{}.
@@ -110,32 +123,6 @@ func (n *fieldNode) runOnValue(v reflect.Value) (interface{}, error) {
 }
 
 // ------------------------------------------------------------
-// FLOAT-NODE
-
-// floatNode returns a constant float64.
-type floatNode struct {
-	Value float64
-}
-
-func (n *floatNode) Run(_i interface{}) (interface{}, error) {
-	//	fmt.Println("Run floatNode", n.Value)
-	return n.Value, nil
-}
-
-// ------------------------------------------------------------
-// INT-NODE
-
-// intNode returns a constant int.
-type intNode struct {
-	Value int
-}
-
-func (n *intNode) Run(_i interface{}) (interface{}, error) {
-	//	fmt.Println("Run intNode", n.Value)
-	return n.Value, nil
-}
-
-// ------------------------------------------------------------
 // PATH-NODE
 
 // pathNode combines two expressions.
@@ -154,19 +141,6 @@ func (n *pathNode) Run(_i interface{}) (interface{}, error) {
 		return nil, err
 	}
 	return n.Rhs.Run(ans)
-}
-
-// ------------------------------------------------------------
-// STRING-NODE
-
-// stringNode returns a constant string.
-type stringNode struct {
-	Value string
-}
-
-func (n *stringNode) Run(_i interface{}) (interface{}, error) {
-	//	fmt.Println("Run stringNode", n.Value)
-	return n.Value, nil
 }
 
 // ------------------------------------------------------------

@@ -24,3 +24,10 @@ func EvalString(term string, input interface{}, errorval string) string {
 	}
 	return errorval
 }
+
+// ------------------------------------------------------------
+// OPT
+
+// Opt contains options for evaluation.
+type Opt struct {
+}

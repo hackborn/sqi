@@ -97,7 +97,7 @@ func (n *tree_node) asAst() (AstNode, error) {
 		if err != nil {
 			return nil, err
 		}
-		return &floatNode{Value: f64}, nil
+		return &constantNode{Value: f64}, nil
 	case int_token:
 		if len(n.Children) != 0 {
 			return nil, errors.New("sqi: parse int has wrong number of children: " + strconv.Itoa(len(n.Children)))
@@ -106,7 +106,7 @@ func (n *tree_node) asAst() (AstNode, error) {
 		if err != nil {
 			return nil, err
 		}
-		return &intNode{Value: int(i)}, nil
+		return &constantNode{Value: int(i)}, nil
 	case open_token:
 		child, err := n.makeUnary()
 		if err != nil {
@@ -126,7 +126,7 @@ func (n *tree_node) asAst() (AstNode, error) {
 		// There are rules on strings -- based on context I can be either a field or string node
 		ctx := n.getCtx()
 		if ctx == string_tree_ctx {
-			return &stringNode{Value: n.T.Text}, nil
+			return &constantNode{Value: n.T.Text}, nil
 		}
 		return &fieldNode{Field: n.T.Text}, nil
 	}
