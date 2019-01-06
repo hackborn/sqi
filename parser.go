@@ -54,7 +54,7 @@ func make_tree(tokens []token_t) (*tree_node, error) {
 	return root, nil
 }
 
-// ----------------------------------------
+// ------------------------------------------------------------
 // TREE-NODE
 
 // tree_node is used to assemble the tokens into a tree.
@@ -179,7 +179,7 @@ func (n *tree_node) isToken(tokens ...Token) bool {
 	return false
 }
 
-// ----------------------------------------
+// ------------------------------------------------------------
 // CONST and VAR
 
 type tree_ctx int

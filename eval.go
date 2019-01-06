@@ -1,5 +1,8 @@
 package sqi
 
+// ------------------------------------------------------------
+// EVAL
+
 // Eval() runs term against input, returning the result.
 func Eval(term string, input interface{}) (interface{}, error) {
 	expr, err := MakeExpr(term)

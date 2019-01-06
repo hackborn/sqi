@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-// --------------------------------------------------------------------------------------
+// ------------------------------------------------------------
 // TEST-LEXER
 
 func TestLexer(t *testing.T) {
@@ -41,7 +41,7 @@ func TestLexer(t *testing.T) {
 	}
 }
 
-// --------------------------------------------------------------------------------------
+// ------------------------------------------------------------
 // TEST-PARSER
 
 func TestParser(t *testing.T) {
@@ -86,7 +86,7 @@ var (
 	parser_want_8 = path_n(field_n(`Child`), eql_n(field_n(`Height`), float_n(5.5)))
 )
 
-// --------------------------------------------------------------------------------------
+// ------------------------------------------------------------
 // TEST-AST-GET
 
 func TestAstGet(t *testing.T) {
@@ -138,7 +138,7 @@ var (
 	get_name_cb_node = eql_n(field_n("Name"), string_n("cb"))
 )
 
-// --------------------------------------------------------------------------------------
+// ------------------------------------------------------------
 // TEST-EXPR
 
 func TestExpr(t *testing.T) {
@@ -174,7 +174,7 @@ var (
 	expr_eval_input_1 = &Person{Mom: Relative{Name: "Ana"}}
 )
 
-// --------------------------------------------------------------------------------------
+// ------------------------------------------------------------
 // MODEL
 
 type Person struct {
@@ -184,6 +184,13 @@ type Person struct {
 	Children []Person  `json:"Children,omitempty"` // Test a value collection
 	Friends  []*Person `json:"Friends,omitempty"`  // Test a pointer collection
 }
+
+type Relative struct {
+	Name string `json:"Name,omitempty"`
+}
+
+// ------------------------------------------------------------
+// MODEL BOILERPLATE
 
 // MarshalJSON() is only necessary because go randomizes the fields.
 func (p *Person) MarshalJSON() ([]byte, error) {
@@ -235,15 +242,11 @@ func (p *Person) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-type Relative struct {
-	Name string `json:"Name,omitempty"`
-}
-
 func (r Relative) Empty() bool {
 	return r.Name == ""
 }
 
-// --------------------------------------------------------------------------------------
+// ------------------------------------------------------------
 // BUILD
 
 func tokens(all ...interface{}) []token_t {
@@ -293,7 +296,7 @@ func string_n(value string) AstNode {
 	return &stringNode{Value: value}
 }
 
-// --------------------------------------------------------------------------------------
+// ------------------------------------------------------------
 // COMPARE
 
 func errorMatches(a, b error) bool {
@@ -330,7 +333,7 @@ func tokensMatch(a, b []token_t) bool {
 	return true
 }
 
-// --------------------------------------------------------------------------------------
+// ------------------------------------------------------------
 // CONVERT
 
 func toJson(i interface{}) interface{} {

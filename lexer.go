@@ -44,7 +44,7 @@ func scan(input string) ([]token_t, error) {
 	return runer.tokens, nil
 }
 
-// ----------------------------------------
+// ------------------------------------------------------------
 // IDENT-RUNER
 
 // ident_runer supplies the rules for turning runes into idents.
@@ -89,7 +89,7 @@ func (r *ident_runer) flush() {
 	r.accum = nil
 }
 
-// ----------------------------------------
+// ------------------------------------------------------------
 // TOKEN_T
 
 type token_t struct {
@@ -123,7 +123,7 @@ func (t token_t) isCloseParen() bool {
 	return t.Tok == close_token
 }
 
-// ----------------------------------------
+// ------------------------------------------------------------
 // CONST and VAR
 
 type Token int
