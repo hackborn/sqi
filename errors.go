@@ -3,44 +3,44 @@ package sqi
 import ()
 
 var (
-	BadRequestErr = NewBadRequestError("")
-	MismatchErr   = NewMismatchError("")
-	UnhandledErr  = NewUnhandledError("")
+	badRequestErr = newBadRequestError("")
+	mismatchErr   = newMismatchError("")
+	unhandledErr  = newUnhandledError("")
 )
 
 // --------------------------------
-// PHLY-ERROR
+// SQI-ERROR
 
-func NewBadRequestError(msg string) error {
-	return &SqiError{BadRequestErrCode, msg, nil}
+func newBadRequestError(msg string) error {
+	return &sqi_err_t{badRequestErrCode, msg, nil}
 }
 
-func NewMismatchError(msg string) error {
-	return &SqiError{MismatchErrCode, msg, nil}
+func newMismatchError(msg string) error {
+	return &sqi_err_t{mismatchErrCode, msg, nil}
 }
 
-func NewUnhandledError(msg string) error {
-	return &SqiError{UnhandledErrCode, msg, nil}
+func newUnhandledError(msg string) error {
+	return &sqi_err_t{unhandledErrCode, msg, nil}
 }
 
-type SqiError struct {
+type sqi_err_t struct {
 	code int
 	msg  string
 	err  error
 }
 
-func (e *SqiError) ErrorCode() int {
+func (e *sqi_err_t) ErrorCode() int {
 	return e.code
 }
 
-func (e *SqiError) Error() string {
+func (e *sqi_err_t) Error() string {
 	var label string
 	switch e.code {
-	case BadRequestErrCode:
+	case badRequestErrCode:
 		label = "sqi: bad request"
-	case MismatchErrCode:
+	case mismatchErrCode:
 		label = "sqi: mismatch"
-	case UnhandledErrCode:
+	case unhandledErrCode:
 		label = "sqi: unhandled"
 	default:
 		label = "sqi: error"
@@ -71,7 +71,7 @@ func mergeErrors(err ...error) error {
 // CONST and VAR
 
 const (
-	BadRequestErrCode = 1000 + iota
-	MismatchErrCode
-	UnhandledErrCode
+	badRequestErrCode = 1000 + iota
+	mismatchErrCode
+	unhandledErrCode
 )

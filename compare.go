@@ -17,29 +17,29 @@ func interfacesEqual(a, b interface{}) (bool, error) {
 		if bt, ok := b.(bool); ok {
 			return at == bt, nil
 		}
-		return false, NewMismatchError("types " + reflect.TypeOf(a).Name() + " and " + reflect.TypeOf(b).Name())
+		return false, newMismatchError("types " + reflect.TypeOf(a).Name() + " and " + reflect.TypeOf(b).Name())
 	case string:
 		if bt, ok := b.(string); ok {
 			return at == bt, nil
 		}
-		return false, NewMismatchError("types " + reflect.TypeOf(a).Name() + " and " + reflect.TypeOf(b).Name())
+		return false, newMismatchError("types " + reflect.TypeOf(a).Name() + " and " + reflect.TypeOf(b).Name())
 	case int:
 		if bt, ok := b.(int); ok {
 			return at == bt, nil
 		}
-		return false, NewMismatchError("types " + reflect.TypeOf(a).Name() + " and " + reflect.TypeOf(b).Name())
+		return false, newMismatchError("types " + reflect.TypeOf(a).Name() + " and " + reflect.TypeOf(b).Name())
 	case float32:
 		if bt, ok := b.(float32); ok {
 			return float64Equal(float64(at), float64(bt)), nil
 		}
-		return false, NewMismatchError("types " + reflect.TypeOf(a).Name() + " and " + reflect.TypeOf(b).Name())
+		return false, newMismatchError("types " + reflect.TypeOf(a).Name() + " and " + reflect.TypeOf(b).Name())
 	case float64:
 		if bt, ok := b.(float64); ok {
 			return float64Equal(at, bt), nil
 		}
-		return false, NewMismatchError("types " + reflect.TypeOf(a).Name() + " and " + reflect.TypeOf(b).Name())
+		return false, newMismatchError("types " + reflect.TypeOf(a).Name() + " and " + reflect.TypeOf(b).Name())
 	}
-	return false, NewUnhandledError("type " + reflect.TypeOf(a).Name())
+	return false, newUnhandledError("type " + reflect.TypeOf(a).Name())
 }
 
 // ------------------------------------------------------------

@@ -159,8 +159,8 @@ func TestExpr(t *testing.T) {
 		{`Name == "Ana Belle"`, expr_eval_input_2, Opt{}, true, nil},
 		// Test strictness -- by default strict is off, and incompatibile comparisons result in false.
 		{`Name == 22`, expr_eval_input_3, Opt{Strict: false}, false, nil},
-		// Test strictness -- if strict is on, report error with incompoatible comparisons.
-		{`Name == 22`, expr_eval_input_3, Opt{Strict: true}, false, MismatchErr},
+		// Test strictness -- if strict is on, report error with incompatible comparisons.
+		{`Name == 22`, expr_eval_input_3, Opt{Strict: true}, false, mismatchErr},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
@@ -319,8 +319,8 @@ func errorMatches(a, b error) bool {
 		return false
 	}
 	// Internal error class only needs to match to the type
-	aerr, aok := a.(*SqiError)
-	berr, bok := b.(*SqiError)
+	aerr, aok := a.(*sqi_err_t)
+	berr, bok := b.(*sqi_err_t)
 	if aok && bok {
 		return aerr.code == berr.code
 	}
