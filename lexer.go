@@ -123,6 +123,14 @@ func (t token_t) isCloseParen() bool {
 	return t.Tok == close_token
 }
 
+func (t token_t) needsCondition() bool {
+	return t.Tok == eql_token || t.Tok == neq_token
+}
+
+func (t token_t) canHaveCondition() bool {
+	return t.needsCondition() || (t.Tok > start_conditional && t.Tok < end_conditional)
+}
+
 // ------------------------------------------------------------
 // CONST and VAR
 
@@ -138,7 +146,8 @@ const (
 	float_token  // 123.45
 	string_token // "abc"
 
-	start_binary // All binary operators must be after this
+	// -- BINARIES. All binary operators must be after this
+	start_binary
 
 	// Assignment
 	assign_token // =
@@ -150,15 +159,30 @@ const (
 	eql_token // ==
 	neq_token // !=
 
-	// Conditional
+	// -- CONDITIONALS. All conditional operators must be after this
+	start_conditional
+
 	and_token // &&
 	or_token  // ||
 
-	end_binary // All binary operators must be before this
+	// -- END CONDITIONALS.
+	end_conditional
+
+	// -- END BINARIES.
+	end_binary
+
+	// -- UNARIES. All unary operators must be after this
+	start_unary
 
 	// Precedence
 	open_token  // (
 	close_token // )
+
+	// True/false condition
+	condition_token
+
+	// -- END UNARIES.
+	end_unary
 )
 
 var (

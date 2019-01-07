@@ -78,12 +78,12 @@ var (
 	parser_want_0 = field_n(`Child`)
 	parser_want_1 = path_n(field_n(`Child`), field_n(`Name`))
 	parser_want_2 = path_n(field_n(`Child`), path_n(field_n(`Arm`), field_n(`Length`)))
-	parser_want_3 = path_n(field_n(`Child`), eql_n(field_n(`Name`), string_n(`a`)))
+	parser_want_3 = path_n(field_n(`Child`), cnd_n(eql_n(field_n(`Name`), string_n(`a`))))
 	parser_want_4 = paren_n(field_n(`Child`))
-	parser_want_5 = path_n(field_n(`Child`), paren_n(eql_n(field_n(`Name`), string_n(`a`))))
-	parser_want_6 = eql_n(paren_n(path_n(field_n(`Child`), field_n(`Name`))), string_n(`a`))
-	parser_want_7 = path_n(field_n(`Child`), eql_n(field_n(`Age`), int_n(10)))
-	parser_want_8 = path_n(field_n(`Child`), eql_n(field_n(`Height`), float_n(5.5)))
+	parser_want_5 = path_n(field_n(`Child`), paren_n(cnd_n(eql_n(field_n(`Name`), string_n(`a`)))))
+	parser_want_6 = cnd_n(eql_n(paren_n(path_n(field_n(`Child`), field_n(`Name`))), string_n(`a`)))
+	parser_want_7 = path_n(field_n(`Child`), cnd_n(eql_n(field_n(`Age`), int_n(10))))
+	parser_want_8 = path_n(field_n(`Child`), cnd_n(eql_n(field_n(`Height`), float_n(5.5))))
 )
 
 // ------------------------------------------------------------
@@ -133,7 +133,7 @@ var (
 	ast_get_expr_2  = field_n("Children")
 
 	ast_get_input_3 = &Person{Children: []Person{Person{Name: "ca"}, Person{Name: "cb"}, Person{Name: "cc"}}}
-	ast_get_expr_3  = path_n(children_node, get_name_cb_node)
+	ast_get_expr_3  = path_n(field_n("Children"), cnd_n(eql_n(field_n("Name"), string_n("cb"))))
 
 	children_node    = field_n("Children")
 	get_name_cb_node = eql_n(field_n("Name"), string_n("cb"))
@@ -161,6 +161,9 @@ func TestExpr(t *testing.T) {
 		{`Name == 22`, expr_eval_input_3, Opt{Strict: false}, false, nil},
 		// Test strictness -- if strict is on, report error with incompatible comparisons.
 		{`Name == 22`, expr_eval_input_3, Opt{Strict: true}, false, mismatchErr},
+		// Test int evalation, equal and not equal.
+		{`Age == 22`, expr_eval_input_4, Opt{}, true, nil},
+		{`Age != 22`, expr_eval_input_4, Opt{}, false, nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
@@ -185,6 +188,7 @@ var (
 	expr_eval_input_1 = &Person{Mom: Relative{Name: "Ana"}}
 	expr_eval_input_2 = &Person{Name: "Ana Belle"}
 	expr_eval_input_3 = &Person{Name: "Ana"}
+	expr_eval_input_4 = &Person{Age: 22}
 )
 
 // ------------------------------------------------------------
@@ -279,6 +283,10 @@ func tokens(all ...interface{}) []token_t {
 		}
 	}
 	return tokens
+}
+
+func cnd_n(child AstNode) AstNode {
+	return &conditionNode{Op: condition_token, Child: child}
 }
 
 func eql_n(lhs, rhs AstNode) AstNode {

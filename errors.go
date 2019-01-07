@@ -4,6 +4,8 @@ import ()
 
 var (
 	badRequestErr = newBadRequestError("")
+	conditionErr  = newConditionError("")
+	malformedErr  = newMalformedError("")
 	mismatchErr   = newMismatchError("")
 	unhandledErr  = newUnhandledError("")
 )
@@ -13,6 +15,14 @@ var (
 
 func newBadRequestError(msg string) error {
 	return &sqi_err_t{badRequestErrCode, msg, nil}
+}
+
+func newConditionError(msg string) error {
+	return &sqi_err_t{conditionErrCode, msg, nil}
+}
+
+func newMalformedError(msg string) error {
+	return &sqi_err_t{malformedErrCode, msg, nil}
 }
 
 func newMismatchError(msg string) error {
@@ -38,6 +48,10 @@ func (e *sqi_err_t) Error() string {
 	switch e.code {
 	case badRequestErrCode:
 		label = "sqi: bad request"
+	case conditionErrCode:
+		label = "sqi: condition"
+	case malformedErrCode:
+		label = "sqi: malformed"
 	case mismatchErrCode:
 		label = "sqi: mismatch"
 	case unhandledErrCode:
@@ -72,6 +86,8 @@ func mergeErrors(err ...error) error {
 
 const (
 	badRequestErrCode = 1000 + iota
+	conditionErrCode
+	malformedErrCode
 	mismatchErrCode
 	unhandledErrCode
 )

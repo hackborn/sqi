@@ -37,6 +37,13 @@ func make_tree(tokens []token_t) (*tree_node, error) {
 				return nil, err
 			}
 			cur = tn
+			// Special insertion rules: Conditionals can only exist inside condition nodes
+			if t.needsCondition() {
+				err := cur.setCondition()
+				if err != nil {
+					return nil, err
+				}
+			}
 		} else if t.isOpenParen() {
 			cur.addChild(tn)
 			paren = append(paren, tn)
@@ -63,6 +70,7 @@ type tree_node struct {
 	Parent   *tree_node `json:"-"`
 	Children []*tree_node
 	T        token_t
+	Insert   Token // A command to replace this node with a unary that contains it.
 }
 
 func (n *tree_node) addChild(child *tree_node) {
@@ -82,14 +90,48 @@ func (n *tree_node) replaceChild(oldchild, newchild *tree_node) error {
 	return errors.New("sqi: parse missing child")
 }
 
+// setCondition() finds the proper node to insert a condtion node. This is used
+// by boolean conditions: Every subgraph that needs to evaluate to true/false
+// must be wrapped in a condition. Currently that means any comparison booleans,
+// and the conditionals that can contain them.
+func (n *tree_node) setCondition() error {
+	if n.Parent == nil || !n.Parent.T.canHaveCondition() {
+		return n.setInsert(condition_token)
+	}
+	return n.Parent.setCondition()
+}
+
+// setInsert() sets the insert value for this node. A node can only have a single
+// insert type set -- any change will result in an error.
+func (n *tree_node) setInsert(t Token) error {
+	if n.Insert == illegal_token || n.Insert == t {
+		n.Insert = t
+		return nil
+	}
+	return newMismatchError("tree insert " + strconv.Itoa(int(n.Insert)) + " and " + strconv.Itoa(int(t)))
+}
+
+// asAst() converts this node into an AST node, including special rules like the insert.
 func (n *tree_node) asAst() (AstNode, error) {
+	node, err := n.nodeAsAst()
+	if err != nil {
+		return nil, err
+	}
+	if n.Insert == condition_token {
+		node = &conditionNode{n.Insert, node}
+	}
+	return node, nil
+}
+
+// nodeAsAst() returns the AST node for this tree node.
+func (n *tree_node) nodeAsAst() (AstNode, error) {
 	switch n.T.Tok {
-	case eql_token:
+	case eql_token, neq_token:
 		lhs, rhs, err := n.makeBinary()
 		if err != nil {
 			return nil, err
 		}
-		return &binaryNode{Op: eql_token, Lhs: lhs, Rhs: rhs}, nil
+		return &binaryNode{Op: n.T.Tok, Lhs: lhs, Rhs: rhs}, nil
 	case float_token:
 		if len(n.Children) != 0 {
 			return nil, errors.New("sqi: parse float has wrong number of children: " + strconv.Itoa(len(n.Children)))

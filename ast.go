@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 )
 
 // ------------------------------------------------------------
@@ -27,38 +28,25 @@ type binaryNode struct {
 }
 
 func (n *binaryNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
-	//	fmt.Println("Eval binaryNode", n.lhs, n.rhs)
+	// fmt.Println("Eval binaryNode", n.Lhs, n.Rhs)
 	if !(n.Op > start_binary && n.Op < end_binary) || n.Lhs == nil || n.Rhs == nil {
-		return nil, errors.New("sqi: invalid binary")
+		return nil, newMalformedError("binary node")
 	}
-	// Every item in _i that has a Lhs matching Rhs is included.
-	// We need to distinguish between slices, arrays, and single items
-	rt := reflect.TypeOf(_i)
-	switch rt.Kind() {
-	case reflect.Slice:
-		src := reflect.Indirect(reflect.ValueOf(_i))
-		dst := reflect.MakeSlice(rt, 0, src.Len())
-		for i := 0; i < src.Len(); i++ {
-			item := src.Index(i)
-			b, err := n.runEquals(item.Interface(), opt)
-			if err != nil {
-				return nil, err
-			}
-			if b {
-				dst = reflect.Append(dst, item)
-			}
+	switch n.Op {
+	case eql_token:
+		return n.evalEql(_i, opt)
+	case neq_token:
+		resp, err := n.evalEql(_i, opt)
+		if err != nil {
+			return false, err
 		}
-		return dst.Interface(), nil
-	case reflect.Array:
-		fmt.Println(n.Lhs, "is an array with element type", rt.Elem())
-		return nil, errors.New("sqi: Unhandled binaryNode.Run() on reflect.Array")
+		return !resp, err
 	default:
-		return n.runEquals(_i, opt)
+		return nil, newUnhandledError("binary " + strconv.Itoa(int(n.Op)))
 	}
-	return _i, nil
 }
 
-func (n *binaryNode) runEquals(_i interface{}, opt *Opt) (bool, error) {
+func (n *binaryNode) evalEql(_i interface{}, opt *Opt) (bool, error) {
 	lhs, err := n.Lhs.Eval(_i, opt)
 	if err != nil {
 		return false, err
@@ -72,6 +60,61 @@ func (n *binaryNode) runEquals(_i interface{}, opt *Opt) (bool, error) {
 		return false, err
 	}
 	return eq, nil
+}
+
+// ------------------------------------------------------------
+// CONDITION-NODE
+
+// conditionNode is a unary that filters the incoming interface
+// by a boolean condition. The node it contains must respond with true or false.
+type conditionNode struct {
+	Op    Token
+	Child AstNode
+}
+
+func (n *conditionNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
+	//	fmt.Println("Eval conditionNode", n.lhs, n.rhs)
+	if !(n.Op > start_unary && n.Op < end_unary) || n.Child == nil {
+		return nil, newMalformedError("condition node")
+	}
+	// Every item in _i is evaluated to true or false.
+	// We need to distinguish between slices, arrays, and single items
+	rt := reflect.TypeOf(_i)
+	switch rt.Kind() {
+	case reflect.Slice:
+		src := reflect.Indirect(reflect.ValueOf(_i))
+		dst := reflect.MakeSlice(rt, 0, src.Len())
+		for i := 0; i < src.Len(); i++ {
+			item := src.Index(i)
+			b, err := n.isTrue(item.Interface(), opt)
+			if err != nil {
+				return nil, err
+			}
+			if b {
+				dst = reflect.Append(dst, item)
+			}
+		}
+		return dst.Interface(), nil
+	case reflect.Array:
+		fmt.Println("condition is an array with element type", rt.Elem())
+		return nil, newUnhandledError("conditionNode.Eval() on reflect.Array")
+	default:
+		// When working on collections, we return a new one, but when working
+		// on single objects, we return the results of the evaluation.
+		return n.isTrue(_i, opt)
+	}
+}
+
+// isTrue() determines if my child evaluates to true based on the input.
+func (n *conditionNode) isTrue(_i interface{}, opt *Opt) (bool, error) {
+	resp, err := n.Child.Eval(_i, opt)
+	if err != nil {
+		return false, err
+	}
+	if b, ok := resp.(bool); ok {
+		return b, nil
+	}
+	return false, newConditionError("must be boolean")
 }
 
 // ------------------------------------------------------------
@@ -98,15 +141,24 @@ type fieldNode struct {
 func (n *fieldNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
 	//	fmt.Println("Eval fieldNode", n.field)
 	if len(n.Field) < 1 {
-		return nil, errors.New("Missing fieled select")
+		return nil, newMalformedError("field node")
 	}
+	// Errors
+	rt := reflect.TypeOf(_i)
+	switch rt.Kind() {
+	case reflect.Array:
+		return nil, newConditionError("fieldNode must not receive reflect.Array")
+	case reflect.Slice:
+		return nil, newConditionError("fieldNode must not receive reflect.Slice")
+	}
+
 	var child interface{}
 	var err error
 	switch t := _i.(type) {
 	case map[string]interface{}:
 		child = t[n.Field]
 	case reflect.Value:
-		return nil, errors.New("Internal error: fieldNode must not receive reflect.Value")
+		return nil, newConditionError("fieldNode must not receive reflect.Value")
 	default:
 		child, err = n.runOnValue(reflect.Indirect(reflect.ValueOf(_i)))
 	}
@@ -139,7 +191,7 @@ type pathNode struct {
 func (n *pathNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
 	//	fmt.Println("Eval pathNode", n.lhs, n.rhs)
 	if n.Lhs == nil || n.Rhs == nil {
-		return nil, errors.New("Invalid path")
+		return nil, newMalformedError("path node")
 	}
 	ans, err := n.Lhs.Eval(_i, opt)
 	if err != nil {
@@ -160,7 +212,7 @@ type unaryNode struct {
 func (n *unaryNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
 	//	fmt.Println("Eval unaryNode", n.Child)
 	if n.Child == nil {
-		return nil, errors.New("Invalid unary")
+		return nil, newMalformedError("unary node")
 	}
 	return n.Child.Eval(_i, opt)
 }
