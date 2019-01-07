@@ -41,17 +41,17 @@ func (n *binaryNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
 			return false, err
 		}
 		return !resp, err
+	case and_token:
+		return n.evalAnd(_i, opt)
+	case or_token:
+		return n.evalOr(_i, opt)
 	default:
 		return nil, newUnhandledError("binary " + strconv.Itoa(int(n.Op)))
 	}
 }
 
 func (n *binaryNode) evalEql(_i interface{}, opt *Opt) (bool, error) {
-	lhs, err := n.Lhs.Eval(_i, opt)
-	if err != nil {
-		return false, err
-	}
-	rhs, err := n.Rhs.Eval(_i, opt)
+	lhs, rhs, err := n.evalBinary(_i, opt)
 	if err != nil {
 		return false, err
 	}
@@ -60,6 +60,44 @@ func (n *binaryNode) evalEql(_i interface{}, opt *Opt) (bool, error) {
 		return false, err
 	}
 	return eq, nil
+}
+
+func (n *binaryNode) evalAnd(_i interface{}, opt *Opt) (bool, error) {
+	lhs, rhs, err := n.evalBinary(_i, opt)
+	if err != nil {
+		return false, err
+	}
+	ls, lok := lhs.(bool)
+	rs, rok := rhs.(bool)
+	if !lok || !rok {
+		return false, newConditionError("&& must evaluate to boolean")
+	}
+	return ls && rs, nil
+}
+
+func (n *binaryNode) evalOr(_i interface{}, opt *Opt) (bool, error) {
+	lhs, rhs, err := n.evalBinary(_i, opt)
+	if err != nil {
+		return false, err
+	}
+	ls, lok := lhs.(bool)
+	rs, rok := rhs.(bool)
+	if !lok || !rok {
+		return false, newConditionError("|| must evaluate to boolean")
+	}
+	return ls || rs, nil
+}
+
+func (n *binaryNode) evalBinary(_i interface{}, opt *Opt) (interface{}, interface{}, error) {
+	lhs, err := n.Lhs.Eval(_i, opt)
+	if err != nil {
+		return nil, nil, err
+	}
+	rhs, err := n.Rhs.Eval(_i, opt)
+	if err != nil {
+		return nil, nil, err
+	}
+	return lhs, rhs, nil
 }
 
 // ------------------------------------------------------------

@@ -126,7 +126,7 @@ func (n *tree_node) asAst() (AstNode, error) {
 // nodeAsAst() returns the AST node for this tree node.
 func (n *tree_node) nodeAsAst() (AstNode, error) {
 	switch n.T.Tok {
-	case eql_token, neq_token:
+	case eql_token, neq_token, and_token, or_token:
 		lhs, rhs, err := n.makeBinary()
 		if err != nil {
 			return nil, err

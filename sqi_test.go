@@ -164,6 +164,11 @@ func TestExpr(t *testing.T) {
 		// Test int evalation, equal and not equal.
 		{`Age == 22`, expr_eval_input_4, Opt{}, true, nil},
 		{`Age != 22`, expr_eval_input_4, Opt{}, false, nil},
+		// Test compound comparisons.
+		{`(Name == "Ana") && (Age == 22)`, expr_eval_input_5, Opt{}, true, nil},
+		{`(Name == "Ana") || (Age == 23)`, expr_eval_input_5, Opt{}, true, nil},
+		{`(Name == "Mana") || (Age == 22)`, expr_eval_input_5, Opt{}, true, nil},
+		{`(Name == "Mana") || (Age == 23)`, expr_eval_input_5, Opt{}, false, nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
@@ -189,6 +194,7 @@ var (
 	expr_eval_input_2 = &Person{Name: "Ana Belle"}
 	expr_eval_input_3 = &Person{Name: "Ana"}
 	expr_eval_input_4 = &Person{Age: 22}
+	expr_eval_input_5 = &Person{Name: "Ana", Age: 22}
 )
 
 // ------------------------------------------------------------
