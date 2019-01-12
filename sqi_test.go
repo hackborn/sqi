@@ -14,7 +14,7 @@ import (
 func TestLexer(t *testing.T) {
 	cases := []struct {
 		Input    string
-		WantResp []token_t
+		WantResp []*token_t
 		WantErr  error
 	}{
 		{`Child`, tokens(`Child`), nil},
@@ -46,7 +46,7 @@ func TestLexer(t *testing.T) {
 
 func TestParser(t *testing.T) {
 	cases := []struct {
-		Input    []token_t
+		Input    []*token_t
 		WantResp AstNode
 		WantErr  error
 	}{
@@ -272,20 +272,20 @@ func (r Relative) Empty() bool {
 // ------------------------------------------------------------
 // BUILD
 
-func tokens(all ...interface{}) []token_t {
-	var tokens []token_t
+func tokens(all ...interface{}) []*token_t {
+	var tokens []*token_t
 	for _, t := range all {
 		switch v := t.(type) {
 		case float32:
 			val := strconv.FormatFloat(float64(v), 'f', 8, 64)
-			tokens = append(tokens, token_t{float_token, val})
+			tokens = append(tokens, newToken(float_token, val))
 		case float64:
 			val := strconv.FormatFloat(v, 'f', 8, 64)
-			tokens = append(tokens, token_t{float_token, val})
+			tokens = append(tokens, newToken(float_token, val))
 		case int:
-			tokens = append(tokens, token_t{int_token, strconv.Itoa(v)})
+			tokens = append(tokens, newToken(int_token, strconv.Itoa(v)))
 		case string:
-			tokens = append(tokens, token_t{string_token, v}.reclassify())
+			tokens = append(tokens, newToken(string_token, v).reclassify())
 		}
 	}
 	return tokens
@@ -352,18 +352,28 @@ func interfaceMatches(a, b interface{}) bool {
 	return ja == jb
 }
 
-func tokensMatch(a, b []token_t) bool {
+func tokensMatch(a, b []*token_t) bool {
 	if len(a) != len(b) {
 		return false
 	} else if len(a) < 1 {
 		return true
 	}
 	for i, t := range a {
-		if b[i] != t {
+		if !tokenMatches(t, b[i]) {
 			return false
 		}
 	}
 	return true
+}
+
+// tokenMatches() compares only the lexer portion of the token, not the parsing.
+func tokenMatches(a, b *token_t) bool {
+	if a == nil && b == nil {
+		return true
+	} else if a == nil || b == nil {
+		return false
+	}
+	return a.Tok == b.Tok && a.Text == b.Text
 }
 
 // ------------------------------------------------------------

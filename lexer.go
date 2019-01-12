@@ -7,7 +7,7 @@ import (
 )
 
 // scan() converts a string into tokens.
-func scan(input string) ([]token_t, error) {
+func scan(input string) ([]*token_t, error) {
 	var lexer scanner.Scanner
 	lexer.Init(strings.NewReader(input))
 	// lexer.Whitespace = 1<<'\r' | 1<<'\t'
@@ -22,10 +22,10 @@ func scan(input string) ([]token_t, error) {
 		switch tok {
 		case scanner.Float:
 			runer.flush()
-			runer.addToken(token_t{float_token, lexer.TokenText()})
+			runer.addToken(newToken(float_token, lexer.TokenText()))
 		case scanner.Int:
 			runer.flush()
-			runer.addToken(token_t{int_token, lexer.TokenText()})
+			runer.addToken(newToken(int_token, lexer.TokenText()))
 		case scanner.Ident:
 			runer.flush()
 			runer.addString(lexer.TokenText())
@@ -50,7 +50,7 @@ func scan(input string) ([]token_t, error) {
 // ident_runer supplies the rules for turning runes into idents.
 type ident_runer struct {
 	accum  []rune
-	tokens []token_t
+	tokens []*token_t
 }
 
 func (r *ident_runer) isIdentRune(ch rune, i int) bool {
@@ -63,10 +63,10 @@ func (r *ident_runer) isIdentRune(ch rune, i int) bool {
 }
 
 func (r *ident_runer) addString(s string) {
-	r.addToken(token_t{string_token, s})
+	r.addToken(newToken(string_token, s))
 }
 
-func (r *ident_runer) addToken(t token_t) {
+func (r *ident_runer) addToken(t *token_t) {
 	r.tokens = append(r.tokens, t.reclassify())
 }
 
@@ -85,7 +85,7 @@ func (r *ident_runer) flush() {
 	if len(r.accum) < 1 {
 		return
 	}
-	r.addToken(token_t{string_token, string(r.accum)})
+	r.addToken(newToken(string_token, string(r.accum)))
 	r.accum = nil
 }
 
@@ -93,20 +93,31 @@ func (r *ident_runer) flush() {
 // TOKEN_T
 
 type token_t struct {
-	Tok  Token
-	Text string
+	Tok          Token
+	Text         string
+	BindingPower int
+
+	// Support for parsing.
+	Parent   *token_t `json:"-"`
+	Children []*token_t
+	//	T        token_t
+	Insert Token // A command to replace this node with a unary that contains it.
+}
+
+func newToken(t Token, text string) *token_t {
+	return &token_t{Tok: t, Text: text, BindingPower: binding_powers[t]}
 }
 
 // reclassify() converts this token into one of the defined
 // keywords, if appropriate. Ideally this is done directly
 // in the scanning stage, but I'm not sure how to get the
 // scanner to do that.
-func (t token_t) reclassify() token_t {
+func (t *token_t) reclassify() *token_t {
 	if t.Tok != string_token {
 		return t
 	}
 	if found, ok := keywords[t.Text]; ok {
-		return token_t{found, t.Text}
+		return newToken(found, t.Text)
 	}
 	return t
 }
@@ -195,5 +206,21 @@ var (
 		`||`: or_token,
 		`(`:  open_token,
 		`)`:  close_token,
+	}
+
+	binding_powers = map[Token]int{
+		illegal_token:   0,
+		int_token:       100,
+		float_token:     100,
+		string_token:    100,
+		assign_token:    80,
+		path_token:      50,
+		eql_token:       70,
+		neq_token:       70,
+		and_token:       60,
+		or_token:        60,
+		open_token:      100,
+		close_token:     100,
+		condition_token: 100,
 	}
 )
