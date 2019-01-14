@@ -7,6 +7,6 @@ import (
 )
 
 // contextualize() insert rules specific to evaluating our rules.
-func contextualize(term *node_t) error {
-	return nil
+func contextualize(tree *node_t) (*node_t, error) {
+	return tree, nil
 }

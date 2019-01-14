@@ -92,30 +92,36 @@ var (
 // ------------------------------------------------------------
 // TEST-CONTEXTUALIZER
 
-/*
 func TestContextualizer(t *testing.T) {
 	cases := []struct {
-		Input    string
-		WantResp AstNode
+		Input    *node_t
+		WantResp *node_t
 		WantErr  error
 	}{
-		{`a`, tokens(`a`), nil},
+		{ctx_input_0, ctx_want_0, nil},
+		{ctx_input_1, ctx_want_1, nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-
-			have_resp, have_err := scan(tc.Input)
+			have_resp, have_err := contextualize(tc.Input)
 			if !errorMatches(have_err, tc.WantErr) {
 				fmt.Println("Error mismatch, have\n", have_err, "\nwant\n", tc.WantErr)
 				t.Fatal()
-			} else if !tokensMatch(have_resp, tc.WantResp) {
+			} else if !interfaceMatches(have_resp, tc.WantResp) {
 				fmt.Println("Token mismatch, have\n", have_resp, "\nwant\n", tc.WantResp)
 				t.Fatal()
 			}
 		})
 	}
 }
-*/
+
+var (
+	ctx_input_0 = newToken(string_token, `a`)
+	ctx_want_0 = newToken(string_token, `a`)
+
+	ctx_input_1 = mk_binary(eql_token, newToken(string_token, `a`), newToken(string_token, `b`))
+	ctx_want_1 = mk_binary(eql_token, newToken(string_token, `a`), newToken(string_token, `b`))
+)
 
 // ------------------------------------------------------------
 // TEST-AST-GET
@@ -305,8 +311,9 @@ func (r Relative) Empty() bool {
 }
 
 // ------------------------------------------------------------
-// BUILD
+// BUILD (tokens)
 
+// tokens() constructs a flat list of tokens
 func tokens(all ...interface{}) []*node_t {
 	var tokens []*node_t
 	for _, t := range all {
@@ -325,6 +332,17 @@ func tokens(all ...interface{}) []*node_t {
 	}
 	return tokens
 }
+
+// mk_binary() constructs a binary token from the symbol
+func mk_binary(sym symbol, left, right *node_t) *node_t {
+	b := newToken(sym, "")
+	b.Children = append(b.Children, left)
+	b.Children = append(b.Children, right)
+	return b
+}
+
+// ------------------------------------------------------------
+// BUILD (ast)
 
 func and_n(lhs, rhs interface{}) AstNode {
 	return &binaryNode{Op: and_token, Lhs: wrap_field_n(lhs), Rhs: wrap_field_n(rhs)}
