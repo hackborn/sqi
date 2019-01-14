@@ -17,15 +17,15 @@ func TestLexer(t *testing.T) {
 		WantResp []*node_t
 		WantErr  error
 	}{
-		{`Child`, tokens(`Child`), nil},
-		{`(Child)`, tokens(`(`, `Child`, `)`), nil},
-		{`Child/Name`, tokens(`Child`, `/`, `Name`), nil},
-		{`Child		/	Name`, tokens(`Child`, `/`, `Name`), nil},
-		{`Child/Name=="a"`, tokens(`Child`, `/`, `Name`, `==`, `"a"`), nil},
-		{`Child/Name=="a b"`, tokens(`Child`, `/`, `Name`, `==`, `"a b"`), nil},
-		{`Child / Name == "a"`, tokens(`Child`, `/`, `Name`, `==`, `"a"`), nil},
-		{`Child/(Name=="a"||Age==10)`, tokens(`Child`, `/`, `(`, `Name`, `==`, `"a"`, `||`, `Age`, `==`, 10, `)`), nil},
-		{`Child / (Name == "a" || Age == 10)`, tokens(`Child`, `/`, `(`, `Name`, `==`, `"a"`, `||`, `Age`, `==`, 10, `)`), nil},
+		{`a`, tokens(`a`), nil},
+		{`(a)`, tokens(`(`, `a`, `)`), nil},
+		{`a/b`, tokens(`a`, `/`, `b`), nil},
+		{`a		/	b`, tokens(`a`, `/`, `b`), nil},
+		{`a/b=="c"`, tokens(`a`, `/`, `b`, `==`, `"c"`), nil},
+		{`a/b=="c d"`, tokens(`a`, `/`, `b`, `==`, `"c d"`), nil},
+		{`a / b == "c"`, tokens(`a`, `/`, `b`, `==`, `"c"`), nil},
+		{`a/(b=="c"||d==10)`, tokens(`a`, `/`, `(`, `b`, `==`, `"c"`, `||`, `d`, `==`, 10, `)`), nil},
+		{`a / (b == "c" || d == 10)`, tokens(`a`, `/`, `(`, `b`, `==`, `"c"`, `||`, `d`, `==`, 10, `)`), nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
@@ -88,6 +88,34 @@ var (
 	parser_want_8 = path_n(string_n(`a`), eql_n(string_n(`b`), float_n(5.5)))
 	parser_want_9 = or_n(eql_n(string_n(`a`), string_n(`b`)), eql_n(string_n(`c`), string_n(`d`)))
 )
+
+// ------------------------------------------------------------
+// TEST-CONTEXTUALIZER
+
+/*
+func TestContextualizer(t *testing.T) {
+	cases := []struct {
+		Input    string
+		WantResp AstNode
+		WantErr  error
+	}{
+		{`a`, tokens(`a`), nil},
+	}
+	for i, tc := range cases {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+
+			have_resp, have_err := scan(tc.Input)
+			if !errorMatches(have_err, tc.WantErr) {
+				fmt.Println("Error mismatch, have\n", have_err, "\nwant\n", tc.WantErr)
+				t.Fatal()
+			} else if !tokensMatch(have_resp, tc.WantResp) {
+				fmt.Println("Token mismatch, have\n", have_resp, "\nwant\n", tc.WantResp)
+				t.Fatal()
+			}
+		})
+	}
+}
+*/
 
 // ------------------------------------------------------------
 // TEST-AST-GET

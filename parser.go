@@ -1,10 +1,7 @@
 package sqi
 
 import (
-	"errors"
 	"fmt"
-	//	"strconv"
-	//	"strings"
 )
 
 // parse() converts tokens into an AST.
@@ -27,7 +24,7 @@ func make_tree(tokens []*node_t) (*node_t, error) {
 	p := newParser(tokens)
 	return p.Expression(0)
 }
-
+/*
 // make_tree() creates the tree structure. It is solely concerned about
 // the structure -- i.e. it cares that a token is a binary, but does not
 // care what type of binary it is.
@@ -58,18 +55,6 @@ func make_tree_no(tokens []*node_t) (*node_t, error) {
 			} else {
 				//				return nil, newParseError("lower binding for " + t.Text + " to " + wrap.Parent.Text)
 			}
-			/*
-				//			fmt.Println("WRAP start at", wrap, "my binding power", t.BindingPower, "wrap parent bp", wrap.Parent.BindingPower)
-				//			for wrap.Parent != nil && wrap.Parent.BindingPower >= 0 && !(t.BindingPower >= wrap.Parent.BindingPower) {
-				for wrap.Parent != nil { // && wrap.Parent.BindingPower >= 0 && !(t.BindingPower >= wrap.Parent.BindingPower) {
-					//				if wrap.Parent.Parent == nil || wrap.Parent.BindingPower >= t.BindingPower {
-					if wrap.Parent.Parent == nil || !(t.BindingPower < wrap.Parent.BindingPower) {
-						break
-					}
-					wrap = wrap.Parent
-					fmt.Println("\tnow wrap", wrap, "sym", wrap.Text, "my bind", t.BindingPower, "wrap bind", wrap.BindingPower)
-				}
-			*/
 			//			print := t.Text == "=="
 			fmt.Println("1 on", wrap, "with parent", wrap.Parent)
 			print := false
@@ -132,46 +117,7 @@ func make_tree_no(tokens []*node_t) (*node_t, error) {
 	}
 	return root.Left, nil
 }
-
-func make_tree_orig(tokens []*node_t) (*node_t, error) {
-	root := &node_t{}
-	cur := root
-	var paren []*node_t
-	for _, t := range tokens {
-		if t.isBinary() {
-			if cur.Parent == nil {
-				return nil, errors.New("sqi: parse has binary with no parent")
-			}
-			err := cur.Parent.replaceChild(cur, t)
-			if err != nil {
-				return nil, err
-			}
-			cur = t
-			// Special insertion rules: Conditionals can only exist inside condition nodes
-			if t.needsCondition() {
-				err := cur.setCondition()
-				if err != nil {
-					return nil, err
-				}
-			}
-		} else if t.isOpenParen() {
-			cur.addChild(t)
-			paren = append(paren, t)
-			cur = t
-		} else if t.isCloseParen() {
-			if len(paren) < 1 {
-				return nil, errors.New("sqi: mismatched parentheses")
-			}
-			cur = paren[len(paren)-1]
-			paren = paren[:len(paren)-1]
-		} else {
-			cur.addChild(t)
-			cur = t
-		}
-	}
-	return root, nil
-}
-
+*/
 // ------------------------------------------------------------
 // PARSER-T
 
