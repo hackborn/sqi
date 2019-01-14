@@ -22,7 +22,7 @@ type AstNode interface {
 
 // binaryNode performs binary operations on the current interface{}.
 type binaryNode struct {
-	Op  Token
+	Op  symbol
 	Lhs AstNode
 	Rhs AstNode
 }
@@ -106,7 +106,7 @@ func (n *binaryNode) evalBinary(_i interface{}, opt *Opt) (interface{}, interfac
 // conditionNode is a unary that filters the incoming interface
 // by a boolean condition. The node it contains must respond with true or false.
 type conditionNode struct {
-	Op    Token
+	Op    symbol
 	Child AstNode
 }
 
@@ -222,8 +222,8 @@ func (n *fieldNode) runOnValue(v reflect.Value) (interface{}, error) {
 
 // pathNode combines two expressions.
 type pathNode struct {
-	Lhs AstNode
-	Rhs AstNode
+	Lhs AstNode `json:"pathleft,omitempty"`
+	Rhs AstNode `json:"pathright,omitempty"`
 }
 
 func (n *pathNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
@@ -243,7 +243,7 @@ func (n *pathNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
 
 // unaryNode performs a unary operation on the current interface{}.
 type unaryNode struct {
-	Op    Token
+	Op    symbol
 	Child AstNode
 }
 

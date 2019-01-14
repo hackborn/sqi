@@ -7,7 +7,7 @@ import (
 )
 
 // scan() converts a string into tokens.
-func scan(input string) ([]*token_t, error) {
+func scan(input string) ([]*node_t, error) {
 	var lexer scanner.Scanner
 	lexer.Init(strings.NewReader(input))
 	// lexer.Whitespace = 1<<'\r' | 1<<'\t'
@@ -50,7 +50,7 @@ func scan(input string) ([]*token_t, error) {
 // ident_runer supplies the rules for turning runes into idents.
 type ident_runer struct {
 	accum  []rune
-	tokens []*token_t
+	tokens []*node_t
 }
 
 func (r *ident_runer) isIdentRune(ch rune, i int) bool {
@@ -66,7 +66,7 @@ func (r *ident_runer) addString(s string) {
 	r.addToken(newToken(string_token, s))
 }
 
-func (r *ident_runer) addToken(t *token_t) {
+func (r *ident_runer) addToken(t *node_t) {
 	r.tokens = append(r.tokens, t.reclassify())
 }
 
@@ -89,6 +89,7 @@ func (r *ident_runer) flush() {
 	r.accum = nil
 }
 
+/*
 // ------------------------------------------------------------
 // TOKEN_T
 
@@ -98,10 +99,13 @@ type token_t struct {
 	BindingPower int
 
 	// Support for parsing.
-	Parent   *token_t `json:"-"`
+	Parent *token_t `json:"-"`
+	Left   *token_t
+	Right  *token_t
+	// Hmm, think I don't need to manage a slice for tokens.
 	Children []*token_t
-	//	T        token_t
-	Insert Token // A command to replace this node with a unary that contains it.
+	Insert   Token // A command to replace this node with a unary that contains it.
+	Rbp      int
 }
 
 func newToken(t Token, text string) *token_t {
@@ -124,6 +128,16 @@ func (t *token_t) reclassify() *token_t {
 
 func (t token_t) isBinary() bool {
 	return t.Tok > start_binary && t.Tok < end_binary
+}
+
+// isCloseFor() answers the paired open token, if this is a close token.
+func (t token_t) isCloseFor() Token {
+	switch t.Tok {
+	case close_token:
+		return open_token
+	default:
+		return illegal_token
+	}
 }
 
 func (t token_t) isOpenParen() bool {
@@ -210,9 +224,9 @@ var (
 
 	binding_powers = map[Token]int{
 		illegal_token:   0,
-		int_token:       100,
-		float_token:     100,
-		string_token:    100,
+		int_token:       0,
+		float_token:     0,
+		string_token:    0,
 		assign_token:    80,
 		path_token:      50,
 		eql_token:       70,
@@ -224,3 +238,4 @@ var (
 		condition_token: 100,
 	}
 )
+*/

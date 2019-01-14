@@ -7,6 +7,7 @@ var (
 	conditionErr  = newConditionError("")
 	malformedErr  = newMalformedError("")
 	mismatchErr   = newMismatchError("")
+	parseErr      = newParseError("")
 	unhandledErr  = newUnhandledError("")
 )
 
@@ -27,6 +28,10 @@ func newMalformedError(msg string) error {
 
 func newMismatchError(msg string) error {
 	return &sqi_err_t{mismatchErrCode, msg, nil}
+}
+
+func newParseError(msg string) error {
+	return &sqi_err_t{parseErrCode, msg, nil}
 }
 
 func newUnhandledError(msg string) error {
@@ -54,6 +59,8 @@ func (e *sqi_err_t) Error() string {
 		label = "sqi: malformed"
 	case mismatchErrCode:
 		label = "sqi: mismatch"
+	case parseErrCode:
+		label = "sqi: parse"
 	case unhandledErrCode:
 		label = "sqi: unhandled"
 	default:
@@ -89,5 +96,6 @@ const (
 	conditionErrCode
 	malformedErrCode
 	mismatchErrCode
+	parseErrCode
 	unhandledErrCode
 )
