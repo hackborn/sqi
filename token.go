@@ -36,6 +36,8 @@ const (
 	float_token  // 123.45
 	string_token // "abc"
 
+	field_token // a string, but with special meaning in the AST
+
 	// -- BINARIES. All binary operators must be after this
 	start_binary
 
@@ -83,6 +85,7 @@ var (
 		int_token:       &token_t{int_token, "", 0, emptyNud, emptyLed},
 		float_token:     &token_t{float_token, "", 0, emptyNud, emptyLed},
 		string_token:    &token_t{string_token, "", 0, emptyNud, emptyLed},
+		field_token:    &token_t{field_token, "", 0, emptyNud, emptyLed},
 		assign_token:    &token_t{assign_token, "=", 80, emptyNud, binaryLed},
 		path_token:      &token_t{path_token, "/", 50, emptyNud, binaryLed},
 		eql_token:       &token_t{eql_token, "==", 70, emptyNud, binaryLed},
@@ -117,12 +120,12 @@ func emptyLed(n *node_t, p *parser_t, left *node_t) (*node_t, error) {
 }
 
 func binaryLed(n *node_t, p *parser_t, left *node_t) (*node_t, error) {
-	n.Children = append(n.Children, left)
+	n.addChild(left)
 	right, err := p.Expression(n.Token.BindingPower)
 	if err != nil {
 		return nil, err
 	}
-	n.Children = append(n.Children, right)
+	n.addChild(right)
 	return n, nil
 }
 

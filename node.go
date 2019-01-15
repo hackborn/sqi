@@ -25,8 +25,8 @@ type node_t struct {
 
 	// Parsing
 	Parent   *node_t `json:"-"`
-	Left     *node_t
-	Right    *node_t
+//	Left     *node_t
+//	Right    *node_t
 	Children []*node_t
 
 	// Contextualizing
@@ -50,6 +50,11 @@ func (n *node_t) reclassify() *node_t {
 // ------------------------------------------------------------
 // PARSE-NODE
 // Additional behaviour on tokens so they can be assembled into a tree.
+
+func (n *node_t) addChild(child *node_t) {
+	n.Children = append(n.Children, child)
+	child.Parent = n
+}
 
 // setCondition() finds the proper node to insert a condtion node. This is used
 // by boolean conditions: Every subgraph that needs to evaluate to true/false
@@ -130,33 +135,10 @@ func (n *node_t) nodeAsAst() (AstNode, error) {
 		}
 		// Unwrap quoted text, which has served its purpose of allowing special characters.
 		text := strings.Trim(n.Text, `"`)
-
-		// There are rules on strings -- based on context I can be either a field or string node
 		return &constantNode{Value: text}, nil
-		/*
-			ctx := n.getCtx()
-			if ctx == string_tree_ctx {
-				return &constantNode{Value: text}, nil
-			}
-			return &fieldNode{Field: text}, nil
-		*/
 	}
 	return nil, newParseError("on unknown token: " + strconv.Itoa(int(n.Token.Symbol)))
 }
-
-/*
-// asAst() converts this node into an AST node, including special rules like the insert.
-func (n *node_t) asAst_orig() (AstNode, error) {
-	node, err := n.nodeAsAst_orig()
-	if err != nil {
-		return nil, err
-	}
-	if n.Insert == condition_token {
-		node = &conditionNode{n.Insert, node}
-	}
-	return node, nil
-}
-*/
 
 func (n *node_t) makeBinary() (AstNode, AstNode, error) {
 	if len(n.Children) != 2 {
@@ -178,35 +160,6 @@ func (n *node_t) makeUnary() (AstNode, error) {
 		return nil, newParseError("unary has wrong number of children: " + strconv.Itoa(len(n.Children)))
 	}
 	return n.Children[0].asAst()
-}
-
-// getCtx() answers the context for this token, based on its position in the syntax tree.
-func (n *node_t) getCtx() tree_ctx {
-	// Not sure how this will evolve, but currently only strings that are rhs of binaries have meaning.
-	if n.Token.Symbol != string_token || n.Parent == nil || n.Parent.Left == nil || n.Parent.Right == nil {
-		return empty_tree_ctx
-	}
-	if !n.Parent.isToken(string_capable_rhs...) {
-		return empty_tree_ctx
-	}
-	if n.Parent.Right == n {
-		return string_tree_ctx
-	}
-	return empty_tree_ctx
-}
-
-func (n *node_t) getCtx_orig() tree_ctx {
-	// Not sure how this will evolve, but currently only strings that are rhs of binaries have meaning.
-	if n.Token.Symbol != string_token || n.Parent == nil || len(n.Parent.Children) != 2 {
-		return empty_tree_ctx
-	}
-	if !n.Parent.isToken(string_capable_rhs...) {
-		return empty_tree_ctx
-	}
-	if n.Parent.Children[1] == n {
-		return string_tree_ctx
-	}
-	return empty_tree_ctx
 }
 
 func (n *node_t) isToken(tokens ...symbol) bool {
