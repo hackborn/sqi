@@ -22,10 +22,10 @@ func scan(input string) ([]*node_t, error) {
 		switch tok {
 		case scanner.Float:
 			runer.flush()
-			runer.addToken(newToken(float_token, lexer.TokenText()))
+			runer.addToken(newNode(float_token, lexer.TokenText()))
 		case scanner.Int:
 			runer.flush()
-			runer.addToken(newToken(int_token, lexer.TokenText()))
+			runer.addToken(newNode(int_token, lexer.TokenText()))
 		case scanner.Ident:
 			runer.flush()
 			runer.addString(lexer.TokenText())
@@ -63,7 +63,7 @@ func (r *ident_runer) isIdentRune(ch rune, i int) bool {
 }
 
 func (r *ident_runer) addString(s string) {
-	r.addToken(newToken(string_token, s))
+	r.addToken(newNode(string_token, s))
 }
 
 func (r *ident_runer) addToken(t *node_t) {
@@ -85,7 +85,7 @@ func (r *ident_runer) flush() {
 	if len(r.accum) < 1 {
 		return
 	}
-	r.addToken(newToken(string_token, string(r.accum)))
+	r.addToken(newNode(string_token, string(r.accum)))
 	r.accum = nil
 }
 

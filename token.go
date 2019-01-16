@@ -3,7 +3,7 @@ package sqi
 import ()
 
 // ------------------------------------------------------------
-// TOKEN_T
+// TOKEN-T
 
 // token_t stores a single token type, and associated behaviour.
 type token_t struct {
@@ -12,6 +12,21 @@ type token_t struct {
 	BindingPower int
 	nud          nudFn
 	led          ledFn
+}
+
+// any() answers true if my symbol is any of the supplied symbols.
+func (t token_t) any(symbols ...symbol) bool {
+	for _, s := range symbols {
+		if t.Symbol == s {
+			return true
+		}
+	}
+	return false
+}
+
+// inside() answers true if my symbol is after start and before end.
+func (t token_t) inside(start, end symbol) bool {
+	return t.Symbol > start && t.Symbol < end
 }
 
 // ------------------------------------------------------------
@@ -48,8 +63,12 @@ const (
 	path_token // /
 
 	// Comparison
+	start_comparison
+
 	eql_token // ==
 	neq_token // !=
+
+	end_comparison
 
 	// -- CONDITIONALS. All conditional operators must be after this
 	start_conditional

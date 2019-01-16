@@ -6,9 +6,9 @@ import (
 )
 
 // ------------------------------------------------------------
-// NODE_T
+// NODE-T
 
-func newToken(s symbol, text string) *node_t {
+func newNode(s symbol, text string) *node_t {
 	token, ok := token_map[s]
 	if !ok {
 		token = token_map[illegal_token]
@@ -28,9 +28,6 @@ type node_t struct {
 //	Left     *node_t
 //	Right    *node_t
 	Children []*node_t
-
-	// Contextualizing
-	Insert symbol // A command to replace this node with a unary that contains it.
 }
 
 // reclassify() converts this token into one of the defined
@@ -42,55 +39,18 @@ func (n *node_t) reclassify() *node_t {
 		return n
 	}
 	if found, ok := keyword_map[n.Text]; ok {
-		return newToken(found.Symbol, n.Text)
+		return newNode(found.Symbol, n.Text)
 	}
 	return n
 }
-
-// ------------------------------------------------------------
-// PARSE-NODE
-// Additional behaviour on tokens so they can be assembled into a tree.
 
 func (n *node_t) addChild(child *node_t) {
 	n.Children = append(n.Children, child)
 	child.Parent = n
 }
 
-// setCondition() finds the proper node to insert a condtion node. This is used
-// by boolean conditions: Every subgraph that needs to evaluate to true/false
-// must be wrapped in a condition. Currently that means any comparison booleans,
-// and the conditionals that can contain them.
-func (n *node_t) setCondition() error {
-	if n.Parent == nil || !n.Parent.canHaveCondition() {
-		return n.setInsert(condition_token)
-	}
-	return n.Parent.setCondition()
-}
-
-// setInsert() sets the insert value for this node. A node can only have a single
-// insert type set -- any change will result in an error.
-func (n *node_t) setInsert(t symbol) error {
-	if n.Insert == illegal_token || n.Insert == t {
-		n.Insert = t
-		return nil
-	}
-	return newMismatchError("tree insert " + strconv.Itoa(int(n.Insert)) + " and " + strconv.Itoa(int(t)))
-}
-
-// asAst() converts this node into an AST node, including special rules like the insert.
+// asAst() returns the AST node for this tree node.
 func (n *node_t) asAst() (AstNode, error) {
-	node, err := n.nodeAsAst()
-	if err != nil {
-		return nil, err
-	}
-	if n.Insert == condition_token {
-		node = &conditionNode{n.Insert, node}
-	}
-	return node, nil
-}
-
-// nodeAsAst() returns the AST node for this tree node.
-func (n *node_t) nodeAsAst() (AstNode, error) {
 	//	fmt.Println("ast", n.Text)
 	switch n.Token.Symbol {
 	case eql_token, neq_token, and_token, or_token:
@@ -160,21 +120,4 @@ func (n *node_t) makeUnary() (AstNode, error) {
 		return nil, newParseError("unary has wrong number of children: " + strconv.Itoa(len(n.Children)))
 	}
 	return n.Children[0].asAst()
-}
-
-func (n *node_t) isToken(tokens ...symbol) bool {
-	for _, t := range tokens {
-		if n.Token.Symbol == t {
-			return true
-		}
-	}
-	return false
-}
-
-func (n *node_t) needsCondition() bool {
-	return n.Token.Symbol == eql_token || n.Token.Symbol == neq_token
-}
-
-func (n *node_t) canHaveCondition() bool {
-	return n.needsCondition() || (n.Token.Symbol > start_conditional && n.Token.Symbol < end_conditional)
 }

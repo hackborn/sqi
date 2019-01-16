@@ -102,8 +102,12 @@ func TestContextualizer(t *testing.T) {
 		WantResp *node_t
 		WantErr  error
 	}{
+		// A string
 		{ctx_input_0, ctx_want_0, nil},
+		// A field
 		{ctx_input_1, ctx_want_1, nil},
+		// A conditional and field/string
+		{ctx_input_2, ctx_want_2, nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
@@ -120,11 +124,14 @@ func TestContextualizer(t *testing.T) {
 }
 
 var (
-	ctx_input_0 = newToken(string_token, `a`)
-	ctx_want_0 = newToken(field_token, `a`)
+	ctx_input_0 = newNode(string_token, `a`)
+	ctx_want_0 = newNode(field_token, `a`)
 
-	ctx_input_1 = mk_binary(eql_token, newToken(string_token, `a`), newToken(string_token, `b`))
-	ctx_want_1 = mk_binary(eql_token, newToken(field_token, `a`), newToken(string_token, `b`))
+	ctx_input_1 = mk_binary(path_token, newNode(string_token, `a`), newNode(string_token, `b`))
+	ctx_want_1 = mk_binary(path_token, newNode(field_token, `a`), newNode(field_token, `b`))
+
+	ctx_input_2 = mk_binary(eql_token, newNode(string_token, `a`), newNode(string_token, `b`))
+	ctx_want_2 = mk_unary(condition_token, mk_binary(eql_token, newNode(field_token, `a`), newNode(string_token, `b`)))
 )
 
 // ------------------------------------------------------------
@@ -324,14 +331,14 @@ func tokens(all ...interface{}) []*node_t {
 		switch v := t.(type) {
 		case float32:
 			val := strconv.FormatFloat(float64(v), 'f', 8, 64)
-			tokens = append(tokens, newToken(float_token, val))
+			tokens = append(tokens, newNode(float_token, val))
 		case float64:
 			val := strconv.FormatFloat(v, 'f', 8, 64)
-			tokens = append(tokens, newToken(float_token, val))
+			tokens = append(tokens, newNode(float_token, val))
 		case int:
-			tokens = append(tokens, newToken(int_token, strconv.Itoa(v)))
+			tokens = append(tokens, newNode(int_token, strconv.Itoa(v)))
 		case string:
-			tokens = append(tokens, newToken(string_token, v).reclassify())
+			tokens = append(tokens, newNode(string_token, v).reclassify())
 		}
 	}
 	return tokens
@@ -339,10 +346,17 @@ func tokens(all ...interface{}) []*node_t {
 
 // mk_binary() constructs a binary token from the symbol
 func mk_binary(sym symbol, left, right *node_t) *node_t {
-	b := newToken(sym, "")
+	b := newNode(sym, "")
 	b.addChild(left)
 	b.addChild(right)
 	return b
+}
+
+// mk_unary() constructs a unary token from the symbol
+func mk_unary(sym symbol, child *node_t) *node_t {
+	n := newNode(sym, "")
+	n.addChild(child)
+	return n
 }
 
 // ------------------------------------------------------------
