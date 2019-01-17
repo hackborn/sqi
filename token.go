@@ -104,7 +104,7 @@ var (
 		int_token:       &token_t{int_token, "", 0, emptyNud, emptyLed},
 		float_token:     &token_t{float_token, "", 0, emptyNud, emptyLed},
 		string_token:    &token_t{string_token, "", 0, emptyNud, emptyLed},
-		field_token:    &token_t{field_token, "", 0, emptyNud, emptyLed},
+		field_token:     &token_t{field_token, "", 0, emptyNud, emptyLed},
 		assign_token:    &token_t{assign_token, "=", 80, emptyNud, binaryLed},
 		path_token:      &token_t{path_token, "/", 50, emptyNud, binaryLed},
 		eql_token:       &token_t{eql_token, "==", 70, emptyNud, binaryLed},

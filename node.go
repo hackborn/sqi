@@ -24,9 +24,9 @@ type node_t struct {
 	Text  string
 
 	// Parsing
-	Parent   *node_t `json:"-"`
-//	Left     *node_t
-//	Right    *node_t
+	Parent *node_t `json:"-"`
+	//	Left     *node_t
+	//	Right    *node_t
 	Children []*node_t
 }
 
@@ -59,6 +59,19 @@ func (n *node_t) asAst() (AstNode, error) {
 			return nil, err
 		}
 		return &binaryNode{Op: n.Token.Symbol, Lhs: lhs, Rhs: rhs}, nil
+	case condition_token:
+		child, err := n.makeUnary()
+		if err != nil {
+			return nil, err
+		}
+		return &conditionNode{Op: open_token, Child: child}, nil
+	case field_token:
+		if len(n.Children) != 0 {
+			return nil, newParseError("field has wrong number of children: " + strconv.Itoa(len(n.Children)))
+		}
+		// Unwrap quoted text, which has served its purpose of allowing special characters.
+		text := strings.Trim(n.Text, `"`)
+		return &fieldNode{Field: text}, nil
 	case float_token:
 		if len(n.Children) != 0 {
 			return nil, newParseError("float has wrong number of children: " + strconv.Itoa(len(n.Children)))

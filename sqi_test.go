@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"reflect"
-	"testing"
+	"strconv"
 	"strings"
+	"testing"
 )
 
 // ------------------------------------------------------------
@@ -53,17 +53,17 @@ func TestParser(t *testing.T) {
 		WantErr  error
 	}{
 		/*
-		{tokens(`a`), parser_want_0, nil},
-		{tokens(`a`, `/`, `b`), parser_want_1, nil},
-		{tokens(`a`, `/`, `b`, `/`, `c`), parser_want_2, nil},
-		{tokens(`a`, `/`, `b`, `==`, `c`), parser_want_3, nil},
-		{tokens(`(`, `a`, `)`), parser_want_4, nil},
-		{tokens(`a`, `/`, `(`, `b`, `==`, `c`, `)`), parser_want_5, nil},
-		{tokens(`(`, `a`, `/`, `b`, `)`, `==`, `c`), parser_want_6, nil},
-		{tokens(`a`, `/`, `b`, `==`, 10), parser_want_7, nil},
-		{tokens(`a`, `/`, `b`, `==`, 5.5), parser_want_8, nil},
-		{tokens(`a`, `==`, `b`, `||`, `c`, `==`, `d`), parser_want_9, nil},
-		{tokens(`(`, `a`, `==`, `b`, `)`, `||`, `(`, `c`, `==`, `d`, `)`), parser_want_9, nil},
+			{tokens(`a`), parser_want_0, nil},
+			{tokens(`a`, `/`, `b`), parser_want_1, nil},
+			{tokens(`a`, `/`, `b`, `/`, `c`), parser_want_2, nil},
+			{tokens(`a`, `/`, `b`, `==`, `c`), parser_want_3, nil},
+			{tokens(`(`, `a`, `)`), parser_want_4, nil},
+			{tokens(`a`, `/`, `(`, `b`, `==`, `c`, `)`), parser_want_5, nil},
+			{tokens(`(`, `a`, `/`, `b`, `)`, `==`, `c`), parser_want_6, nil},
+			{tokens(`a`, `/`, `b`, `==`, 10), parser_want_7, nil},
+			{tokens(`a`, `/`, `b`, `==`, 5.5), parser_want_8, nil},
+			{tokens(`a`, `==`, `b`, `||`, `c`, `==`, `d`), parser_want_9, nil},
+			{tokens(`(`, `a`, `==`, `b`, `)`, `||`, `(`, `c`, `==`, `d`, `)`), parser_want_9, nil},
 		*/
 	}
 	for i, tc := range cases {
@@ -125,13 +125,13 @@ func TestContextualizer(t *testing.T) {
 
 var (
 	ctx_input_0 = newNode(string_token, `a`)
-	ctx_want_0 = newNode(field_token, `a`)
+	ctx_want_0  = newNode(field_token, `a`)
 
 	ctx_input_1 = mk_binary(path_token, newNode(string_token, `a`), newNode(string_token, `b`))
-	ctx_want_1 = mk_binary(path_token, newNode(field_token, `a`), newNode(field_token, `b`))
+	ctx_want_1  = mk_binary(path_token, newNode(field_token, `a`), newNode(field_token, `b`))
 
 	ctx_input_2 = mk_binary(eql_token, newNode(string_token, `a`), newNode(string_token, `b`))
-	ctx_want_2 = mk_unary(condition_token, mk_binary(eql_token, newNode(field_token, `a`), newNode(string_token, `b`)))
+	ctx_want_2  = mk_unary(condition_token, mk_binary(eql_token, newNode(field_token, `a`), newNode(string_token, `b`)))
 )
 
 // ------------------------------------------------------------
@@ -145,12 +145,10 @@ func TestAstGet(t *testing.T) {
 		WantResp interface{}
 		WantErr  error
 	}{
-		/*
-			{ast_get_input_0, ast_get_expr_0, Opt{}, "a", nil},
-			{ast_get_input_1, ast_get_expr_1, Opt{}, Relative{Name: "ca"}, nil},
-			{ast_get_input_2, ast_get_expr_2, Opt{}, []Person{Person{Name: "ca"}, Person{Name: "cb"}}, nil},
-			{ast_get_input_3, ast_get_expr_3, Opt{}, []Person{Person{Name: "cb"}}, nil},
-		*/
+		{ast_get_input_0, ast_get_expr_0, Opt{}, "a", nil},
+		{ast_get_input_1, ast_get_expr_1, Opt{}, Relative{Name: "ca"}, nil},
+		{ast_get_input_2, ast_get_expr_2, Opt{}, []Person{Person{Name: "ca"}, Person{Name: "cb"}}, nil},
+		{ast_get_input_3, ast_get_expr_3, Opt{}, []Person{Person{Name: "cb"}}, nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
@@ -203,24 +201,24 @@ func TestExpr(t *testing.T) {
 		WantResp  interface{}
 		WantErr   error
 	}{
-		/*
-			{`Mom/Name`, expr_eval_input_0, Opt{}, `Ana Belle`, nil},
-			{`(Mom/Name) == Ana`, expr_eval_input_1, Opt{}, true, nil},
-			// Make sure quotes are removed
-			{`Name == "Ana Belle"`, expr_eval_input_2, Opt{}, true, nil},
-			// Test strictness -- by default strict is off, and incompatibile comparisons result in false.
-			{`Name == 22`, expr_eval_input_3, Opt{Strict: false}, false, nil},
-			// Test strictness -- if strict is on, report error with incompatible comparisons.
-			{`Name == 22`, expr_eval_input_3, Opt{Strict: true}, false, mismatchErr},
-			// Test int evalation, equal and not equal.
-			{`Age == 22`, expr_eval_input_4, Opt{}, true, nil},
-			{`Age != 22`, expr_eval_input_4, Opt{}, false, nil},
-			// Test compound comparisons.
-			{`(Name == "Ana") && (Age == 22)`, expr_eval_input_5, Opt{}, true, nil},
-			{`(Name == "Ana") || (Age == 23)`, expr_eval_input_5, Opt{}, true, nil},
-			{`(Name == "Mana") || (Age == 22)`, expr_eval_input_5, Opt{}, true, nil},
-			{`(Name == "Mana") || (Age == 23)`, expr_eval_input_5, Opt{}, false, nil},
-		*/
+		{`Mom/Name`, expr_eval_input_0, Opt{}, `Ana Belle`, nil},
+		{`(Mom/Name) == Ana`, expr_eval_input_1, Opt{}, true, nil},
+		// Make sure quotes are removed
+		{`Name == "Ana Belle"`, expr_eval_input_2, Opt{}, true, nil},
+		// Test strictness -- by default strict is off, and incompatibile comparisons result in false.
+		{`Name == 22`, expr_eval_input_3, Opt{Strict: false}, false, nil},
+		// Test strictness -- if strict is on, report error with incompatible comparisons.
+		{`Name == 22`, expr_eval_input_3, Opt{Strict: true}, false, mismatchErr},
+		// Test int evalation, equal and not equal.
+		{`Age == 22`, expr_eval_input_4, Opt{}, true, nil},
+		{`Age != 22`, expr_eval_input_4, Opt{}, false, nil},
+		// Test compound comparisons.
+		{`Name == "Ana" && Age == 22`, expr_eval_input_5, Opt{}, true, nil},
+		{`(Name == "Ana") && (Age == 22)`, expr_eval_input_5, Opt{}, true, nil},
+		{`Name == "Ana" || Age == 23`, expr_eval_input_5, Opt{}, true, nil},
+		{`(Name == "Ana") || (Age == 23)`, expr_eval_input_5, Opt{}, true, nil},
+		{`(Name == "Mana") || (Age == 22)`, expr_eval_input_5, Opt{}, true, nil},
+		{`(Name == "Mana") || (Age == 23)`, expr_eval_input_5, Opt{}, false, nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
@@ -234,6 +232,10 @@ func TestExpr(t *testing.T) {
 				t.Fatal()
 			} else if !interfaceMatches(have_resp, tc.WantResp) {
 				fmt.Println("Response mismatch, have\n", toJsonString(have_resp), "\nwant\n", toJsonString(tc.WantResp))
+				tokens, _ := scan(tc.TermInput)
+				tree, _ := parse(tokens)
+				tree, _ = contextualize(tree)
+				fmt.Println("tree is\n", toJsonString(tree))
 				t.Fatal()
 			}
 		})

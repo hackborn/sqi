@@ -25,7 +25,7 @@ func (n *node_t) contextualize(args *contextualizeArgs) (*node_t, error) {
 
 	// Begin/continue tracking if I need a conditional inserted.
 	condparent := false
-	if args.condctx == nil &&  n.canHaveConditionalContext() {
+	if args.condctx == nil && n.canHaveConditionalContext() {
 		args.condctx = &conditionalContext{needed: true}
 		condparent = true
 	} else if args.condctx != nil && n.cannotHaveConditionalContext() {
@@ -97,7 +97,7 @@ type conditionalContext struct {
 // CONST and VAR
 
 var (
-	string_capable_rhs = []symbol{assign_token, eql_token, neq_token}
+	string_capable_rhs       = []symbol{assign_token, eql_token, neq_token}
 	condition_disable_fields = []symbol{assign_token, path_token}
 )
 

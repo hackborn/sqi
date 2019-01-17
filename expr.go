@@ -18,7 +18,18 @@ func MakeExpr(term string) (Expr, error) {
 	if err != nil {
 		return nil, err
 	}
-	ast, err := parse(tokens)
+	tree, err := parse(tokens)
+	if err != nil {
+		return nil, err
+	}
+	if tree == nil {
+		return nil, newParseError("no result")
+	}
+	tree, err = contextualize(tree)
+	if err != nil {
+		return nil, err
+	}
+	ast, err := tree.asAst()
 	if err != nil {
 		return nil, err
 	}

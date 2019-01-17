@@ -4,23 +4,8 @@ import (
 	"fmt"
 )
 
-// parse() converts tokens into an AST.
-func parse(tokens []*node_t) (AstNode, error) {
-	tree, err := make_tree(tokens)
-	if err != nil {
-		return nil, err
-	}
-	//	if tree == nil || len(tree.Children) != 1 {
-	//		return nil, errors.New("sqi: parse created empty tree")
-	//	}
-	// fmt.Println("tree:", toJson(tree))
-	return tree.asAst()
-}
-
-// make_tree() creates the tree structure. It is solely concerned about
-// the structure -- i.e. it cares that a token is a binary, but does not
-// care what type of binary it is.
-func make_tree(tokens []*node_t) (*node_t, error) {
+// parse() converts a flat list of tokens into a tree.
+func parse(tokens []*node_t) (*node_t, error) {
 	p := newParser(tokens)
 	return p.Expression(0)
 }
