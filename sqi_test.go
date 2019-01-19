@@ -47,8 +47,6 @@ func TestLexer(t *testing.T) {
 // TEST-PARSER
 
 func TestParser(t *testing.T) {
-	return
-
 	cases := []struct {
 		Input    []*node_t
 		WantResp *node_t
@@ -83,13 +81,13 @@ func TestParser(t *testing.T) {
 
 var (
 	parser_want_0  = str_n(`a`)
-	parser_want_1  = path_n(path_n(str_n(`b`), nil), str_n(`a`))
+	parser_want_1  = path_n(path_n(str_n(`a`), nil), str_n(`b`))
 	parser_want_2  = path_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), str_n(`c`))
 	parser_want_3  = eql_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), str_n(`c`))
 	parser_want_4  = str_n(`a`)
-	parser_want_6  = eql_n(path_n(path_n(str_n(`b`), nil), str_n(`a`)), str_n(`c`))
-	parser_want_7  = eql_n(path_n(path_n(str_n(`b`), nil), str_n(`a`)), int_n(10))
-	parser_want_8  = eql_n(path_n(path_n(str_n(`b`), nil), str_n(`a`)), float_n(5.5))
+	parser_want_6  = eql_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), str_n(`c`))
+	parser_want_7  = eql_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), int_n(10))
+	parser_want_8  = eql_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), float_n(5.5))
 	parser_want_9  = or_n(eql_n(str_n(`a`), str_n(`b`)), eql_n(str_n(`c`), str_n(`d`)))
 	parser_want_10 = or_n(eql_n(path_n(str_n(`a`), nil), path_n(str_n(`b`), nil)), eql_n(path_n(str_n(`c`), nil), path_n(str_n(`d`), nil)))
 )
@@ -98,8 +96,6 @@ var (
 // TEST-CONTEXTUALIZER
 
 func TestContextualizer(t *testing.T) {
-	return
-
 	cases := []struct {
 		Input    *node_t
 		WantResp *node_t
@@ -358,7 +354,7 @@ func tokens(all ...interface{}) []*node_t {
 
 // bin_n() constructs a binary token from the symbol
 func bin_n(sym symbol, left, right *node_t) *node_t {
-	b := newNode(sym, "")
+	b := newNode(sym, token_map[sym].Text)
 	b.addChild(left)
 	b.addChild(right)
 	return b
@@ -369,8 +365,8 @@ func eql_n(left, right *node_t) *node_t {
 }
 
 func float_n(v float64) *node_t {
-	text := strconv.FormatFloat(v, 'f', 6, 64)
-	return newNode(int_token, text)
+	text := strconv.FormatFloat(v, 'f', 8, 64)
+	return newNode(float_token, text)
 }
 
 func int_n(v int) *node_t {
@@ -382,7 +378,7 @@ func or_n(left, right *node_t) *node_t {
 }
 
 func path_n(left, right *node_t) *node_t {
-	b := newNode(path_token, "")
+	b := newNode(path_token, token_map[path_token].Text)
 	b.addChild(left)
 	if right != nil {
 		b.addChild(right)
