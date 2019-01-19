@@ -17,12 +17,6 @@ func contextualize(tree *node_t) (*node_t, error) {
 // NODE-T (contextualizing)
 
 func (n *node_t) contextualize(args *contextualizeArgs) (*node_t, error) {
-	// Strings on the right of certain tokens will be strings,
-	// but all other strings are field selectors.
-	if n.isFieldContext() {
-		n.Token = token_map[field_token]
-	}
-
 	// Begin/continue tracking if I need a conditional inserted.
 	condparent := false
 	if args.condctx == nil && n.canHaveConditionalContext() {
@@ -59,18 +53,6 @@ func (n *node_t) contextualizeChildren(args *contextualizeArgs) error {
 	return nil
 }
 
-// isFieldContext() answers true if this string should be a field.
-func (n *node_t) isFieldContext() bool {
-	if n.Token.Symbol != string_token {
-		return false
-	}
-	// Strings are the right-hand size of a string-capabale binary.
-	if n.Parent != nil && len(n.Parent.Children) == 2 && n.Parent.Token.any(string_capable_rhs...) && n.Parent.Children[1] == n {
-		return false
-	}
-	return true
-}
-
 func (n *node_t) canHaveConditionalContext() bool {
 	return n.Token.inside(start_comparison, end_comparison) || n.Token.inside(start_conditional, end_conditional)
 }
@@ -97,7 +79,6 @@ type conditionalContext struct {
 // CONST and VAR
 
 var (
-	string_capable_rhs       = []symbol{assign_token, eql_token, neq_token}
 	condition_disable_fields = []symbol{assign_token, path_token}
 )
 

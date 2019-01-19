@@ -65,13 +65,15 @@ func (n *node_t) asAst() (AstNode, error) {
 			return nil, err
 		}
 		return &conditionNode{Op: open_token, Child: child}, nil
-	case field_token:
-		if len(n.Children) != 0 {
-			return nil, newParseError("field has wrong number of children: " + strconv.Itoa(len(n.Children)))
-		}
-		// Unwrap quoted text, which has served its purpose of allowing special characters.
-		text := strings.Trim(n.Text, `"`)
-		return &fieldNode{Field: text}, nil
+		/*
+			case field_token:
+				if len(n.Children) != 0 {
+					return nil, newParseError("field has wrong number of children: " + strconv.Itoa(len(n.Children)))
+				}
+				// Unwrap quoted text, which has served its purpose of allowing special characters.
+				text := strings.Trim(n.Text, `"`)
+				return &fieldNode{Field: text}, nil
+		*/
 	case float_token:
 		if len(n.Children) != 0 {
 			return nil, newParseError("float has wrong number of children: " + strconv.Itoa(len(n.Children)))
@@ -97,11 +99,7 @@ func (n *node_t) asAst() (AstNode, error) {
 		}
 		return &unaryNode{Op: open_token, Child: child}, nil
 	case path_token:
-		lhs, rhs, err := n.makeBinary()
-		if err != nil {
-			return nil, err
-		}
-		return &pathNode{Lhs: lhs, Rhs: rhs}, nil
+		return n.makePath()
 	case string_token:
 		if len(n.Children) != 0 {
 			return nil, newParseError("string has wrong number of children: " + strconv.Itoa(len(n.Children)))
@@ -133,4 +131,35 @@ func (n *node_t) makeUnary() (AstNode, error) {
 		return nil, newParseError("unary has wrong number of children: " + strconv.Itoa(len(n.Children)))
 	}
 	return n.Children[0].asAst()
+}
+
+func (n *node_t) makePath() (AstNode, error) {
+	// A path can have one or two children. If there are two, the first
+	// must be a path and the second must be a string. If there is
+	// one, the first must be a string.
+	switch len(n.Children) {
+	case 1:
+		child0 := n.Children[0]
+		// Validate
+		if child0.Token.Symbol != string_token {
+			return nil, newParseError("path must have string")
+		}
+		text := strings.Trim(child0.Text, `"`)
+		return &pathNode{Field: &fieldNode{Field: text}}, nil
+	case 2:
+		child0 := n.Children[0]
+		child1 := n.Children[1]
+		// Validate
+		if child0.Token.Symbol != path_token || child1.Token.Symbol != string_token {
+			return nil, newParseError("path must have path and string")
+		}
+		cn, err := child0.asAst()
+		if err != nil {
+			return nil, err
+		}
+		text := strings.Trim(child1.Text, `"`)
+		return &pathNode{Child: cn, Field: &fieldNode{Field: text}}, nil
+	default:
+		return nil, newParseError("path has wrong number of children: " + strconv.Itoa(len(n.Children)))
+	}
 }

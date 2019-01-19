@@ -51,8 +51,6 @@ const (
 	float_token  // 123.45
 	string_token // "abc"
 
-	field_token // a string, but with special meaning in the AST
-
 	// -- BINARIES. All binary operators must be after this
 	start_binary
 
@@ -104,9 +102,8 @@ var (
 		int_token:       &token_t{int_token, "", 0, emptyNud, emptyLed},
 		float_token:     &token_t{float_token, "", 0, emptyNud, emptyLed},
 		string_token:    &token_t{string_token, "", 0, emptyNud, emptyLed},
-		field_token:     &token_t{field_token, "", 0, emptyNud, emptyLed},
 		assign_token:    &token_t{assign_token, "=", 80, emptyNud, binaryLed},
-		path_token:      &token_t{path_token, "/", 50, emptyNud, binaryLed},
+		path_token:      &token_t{path_token, "/", 100, pathNud, binaryLed},
 		eql_token:       &token_t{eql_token, "==", 70, emptyNud, binaryLed},
 		neq_token:       &token_t{neq_token, "!=", 70, emptyNud, binaryLed},
 		and_token:       &token_t{and_token, "&&", 60, emptyNud, binaryLed},
@@ -135,6 +132,25 @@ func emptyNud(n *node_t, p *parser_t) (*node_t, error) {
 }
 
 func emptyLed(n *node_t, p *parser_t, left *node_t) (*node_t, error) {
+	return n, nil
+}
+
+func pathNud(n *node_t, p *parser_t) (*node_t, error) {
+	right, err := p.Expression(n.Token.BindingPower)
+	if err != nil {
+		return nil, err
+	}
+	n.addChild(right)
+	return n, nil
+}
+
+func pathLed(n *node_t, p *parser_t, left *node_t) (*node_t, error) {
+	right, err := p.Expression(n.Token.BindingPower)
+	if err != nil {
+		return nil, err
+	}
+	n.addChild(right)
+	n.addChild(left)
 	return n, nil
 }
 

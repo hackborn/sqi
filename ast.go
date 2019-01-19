@@ -177,7 +177,7 @@ type fieldNode struct {
 }
 
 func (n *fieldNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
-	//	fmt.Println("Eval fieldNode", n.field)
+	// fmt.Println("Eval fieldNode", n.Field)
 	if len(n.Field) < 1 {
 		return nil, newMalformedError("field node")
 	}
@@ -222,11 +222,35 @@ func (n *fieldNode) runOnValue(v reflect.Value) (interface{}, error) {
 
 // pathNode combines two expressions.
 type pathNode struct {
+	Child AstNode `json:"child,omitempty"`
+	Field AstNode `json:"field,omitempty"`
+}
+
+func (n *pathNode) Eval(i interface{}, opt *Opt) (interface{}, error) {
+	// fmt.Println("Eval pathNode", n.Child, n.Field)
+	if n.Field == nil {
+		return nil, newMalformedError("path node")
+	}
+	if n.Child != nil {
+		var err error
+		i, err = n.Child.Eval(i, opt)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return n.Field.Eval(i, opt)
+}
+
+// ------------------------------------------------------------
+// PATH-NODE
+
+// pathNode combines two expressions.
+type pathNodePrev struct {
 	Lhs AstNode `json:"pathleft,omitempty"`
 	Rhs AstNode `json:"pathright,omitempty"`
 }
 
-func (n *pathNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
+func (n *pathNodePrev) Eval(_i interface{}, opt *Opt) (interface{}, error) {
 	//	fmt.Println("Eval pathNode", n.lhs, n.rhs)
 	if n.Lhs == nil || n.Rhs == nil {
 		return nil, newMalformedError("path node")
