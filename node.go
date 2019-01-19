@@ -25,6 +25,11 @@ type node_t struct {
 
 	// Parsing
 	Parent *node_t `json:"-"`
+	// XXX Note: This has stayed here because I really want to
+	// remove the overhead of allocating a slice while building
+	// the tree. For the whole time, no nodes can have more than
+	// two children and I've been able to do that, but I suspect
+	// future functions will require a child list.
 	//	Left     *node_t
 	//	Right    *node_t
 	Children []*node_t
@@ -65,15 +70,6 @@ func (n *node_t) asAst() (AstNode, error) {
 			return nil, err
 		}
 		return &conditionNode{Op: open_token, Child: child}, nil
-		/*
-			case field_token:
-				if len(n.Children) != 0 {
-					return nil, newParseError("field has wrong number of children: " + strconv.Itoa(len(n.Children)))
-				}
-				// Unwrap quoted text, which has served its purpose of allowing special characters.
-				text := strings.Trim(n.Text, `"`)
-				return &fieldNode{Field: text}, nil
-		*/
 	case float_token:
 		if len(n.Children) != 0 {
 			return nil, newParseError("float has wrong number of children: " + strconv.Itoa(len(n.Children)))

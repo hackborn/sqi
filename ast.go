@@ -242,27 +242,6 @@ func (n *pathNode) Eval(i interface{}, opt *Opt) (interface{}, error) {
 }
 
 // ------------------------------------------------------------
-// PATH-NODE
-
-// pathNode combines two expressions.
-type pathNodePrev struct {
-	Lhs AstNode `json:"pathleft,omitempty"`
-	Rhs AstNode `json:"pathright,omitempty"`
-}
-
-func (n *pathNodePrev) Eval(_i interface{}, opt *Opt) (interface{}, error) {
-	//	fmt.Println("Eval pathNode", n.lhs, n.rhs)
-	if n.Lhs == nil || n.Rhs == nil {
-		return nil, newMalformedError("path node")
-	}
-	ans, err := n.Lhs.Eval(_i, opt)
-	if err != nil {
-		return nil, err
-	}
-	return n.Rhs.Eval(ans, opt)
-}
-
-// ------------------------------------------------------------
 // UNARY-NODE
 
 // unaryNode performs a unary operation on the current interface{}.
