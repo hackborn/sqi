@@ -142,71 +142,11 @@ var (
 )
 
 // ------------------------------------------------------------
-// TEST-AST-GET
-
-// I can't decide if I want these tests -- all the pieces and
-// the full system is tested, and this is feeling like more
-// overhead than it's worth.
-
-/*
-func TestAstGet(t *testing.T) {
-	cases := []struct {
-		Input    interface{}
-		Expr     AstNode
-		Opts     Opt
-		WantResp interface{}
-		WantErr  error
-	}{
-		{ast_get_input_0, ast_get_expr_0, Opt{}, "a", nil},
-		{ast_get_input_1, ast_get_expr_1, Opt{}, Relative{Name: "ca"}, nil},
-		{ast_get_input_2, ast_get_expr_2, Opt{}, []Person{Person{Name: "ca"}, Person{Name: "cb"}}, nil},
-		{ast_get_input_3, ast_get_expr_3, Opt{}, []Person{Person{Name: "cb"}}, nil},
-	}
-	for i, tc := range cases {
-		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			runTestAstGet(t, tc.Input, tc.Expr, tc.Opts, tc.WantResp, tc.WantErr)
-			// Everything that works on the struct variant should work on the unmarshalled json.
-			runTestAstGet(t, toJson(tc.Input), tc.Expr, tc.Opts, tc.WantResp, tc.WantErr)
-		})
-	}
-}
-
-func runTestAstGet(t *testing.T, input interface{}, expr AstNode, opt Opt, want_resp interface{}, want_err error) {
-	have_resp, have_err := expr.Eval(input, &opt)
-	if !errorMatches(have_err, want_err) {
-		fmt.Println("Error mismatch, have\n", have_err, "\nwant\n", want_err)
-		t.Fatal()
-	} else if !interfaceMatches(have_resp, want_resp) {
-		fmt.Println("Response mismatch, have\n", toJsonString(have_resp), "\nwant\n", toJsonString(want_resp))
-		t.Fatal()
-	}
-}
-
-var (
-	ast_get_input_0 = Person{Name: "a"}
-	ast_get_expr_0  = field_n("Name")
-
-	ast_get_input_1 = &Person{Mom: Relative{Name: "ca"}}
-	ast_get_expr_1  = field_n("Mom")
-
-	ast_get_input_2 = &Person{Children: []Person{Person{Name: "ca"}, Person{Name: "cb"}}}
-	ast_get_expr_2  = field_n("Children")
-
-	ast_get_input_3 = &Person{Children: []Person{Person{Name: "ca"}, Person{Name: "cb"}, Person{Name: "cc"}}}
-	//	ast_get_expr_3  = path_n(field_n("Children"), cnd_n(eql_n(field_n("Name"), string_n("cb"))))
-	ast_get_expr_3 = eql_n(field_n("Name"), string_n("cb"))
-
-	children_node    = field_n("Children")
-	get_name_cb_node = eql_n(field_n("Name"), string_n("cb"))
-)
-*/
-
-// ------------------------------------------------------------
 // TEST-EXPR
 
 func TestExpr(t *testing.T) {
 	cases := []struct {
-		TermInput string
+		ExprInput string
 		EvalInput interface{}
 		Opts      Opt
 		WantResp  interface{}
@@ -239,23 +179,29 @@ func TestExpr(t *testing.T) {
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			expr, err := MakeExpr(tc.TermInput)
-			if err != nil {
-				panic(err)
-			}
-			have_resp, have_err := expr.Eval(tc.EvalInput, &tc.Opts)
-			if !errorMatches(have_err, tc.WantErr) {
-				fmt.Println("Error mismatch, have\n", have_err, "\nwant\n", tc.WantErr)
-				t.Fatal()
-			} else if !interfaceMatches(have_resp, tc.WantResp) {
-				fmt.Println("Response mismatch, have\n", toJsonString(have_resp), "\nwant\n", toJsonString(tc.WantResp))
-				tokens, _ := scan(tc.TermInput)
-				tree, _ := parse(tokens)
-				tree, _ = contextualize(tree)
-				fmt.Println("tree is\n", toJsonString(tree))
-				t.Fatal()
-			}
+			runTestExpr(t, tc.ExprInput, tc.EvalInput, tc.Opts, tc.WantResp, tc.WantErr)
+			// Everything that works on the struct should work on the unmarshalled json.
+			runTestExpr(t, tc.ExprInput, toJson(tc.EvalInput), tc.Opts, tc.WantResp, tc.WantErr)
 		})
+	}
+}
+
+func runTestExpr(t *testing.T, exprinput string, evalinput interface{}, opt Opt, want_resp interface{}, want_err error) {
+	expr, err := MakeExpr(exprinput)
+	if err != nil {
+		panic(err)
+	}
+	have_resp, have_err := expr.Eval(evalinput, &opt)
+	if !errorMatches(have_err, want_err) {
+		fmt.Println("Error mismatch, have\n", have_err, "\nwant\n", want_err)
+		t.Fatal()
+	} else if !interfaceMatches(have_resp, want_resp) {
+		fmt.Println("Response mismatch, have\n", toJsonString(have_resp), "\nwant\n", toJsonString(want_resp))
+		tokens, _ := scan(exprinput)
+		tree, _ := parse(tokens)
+		tree, _ = contextualize(tree)
+		fmt.Println("tree is\n", toJsonString(tree))
+		t.Fatal()
 	}
 }
 
@@ -288,7 +234,7 @@ type Relative struct {
 // MODEL BOILERPLATE
 
 // MarshalJSON() is only necessary because go randomizes the fields.
-func (p *Person) MarshalJSON() ([]byte, error) {
+func (p Person) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 
 	type pair_t struct {
@@ -534,11 +480,11 @@ func tokenMatches(a, b *node_t) bool {
 // ------------------------------------------------------------
 // COMPARE BOILERPLATE
 
-func (n *node_t) MarshalJSON() ([]byte, error) {
+func (n node_t) MarshalJSON() ([]byte, error) {
 	return orderedMarshalJSON(n)
 }
 
-func (t *token_t) MarshalJSON() ([]byte, error) {
+func (t token_t) MarshalJSON() ([]byte, error) {
 	return orderedMarshalJSON(t)
 }
 

@@ -96,7 +96,11 @@ func (n *binaryNode) evalEql(_i interface{}, opt *Opt) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	eq, err := interfacesEqual(lhs, rhs)
+	strict := false
+	if opt != nil {
+		strict = opt.Strict
+	}
+	eq, err := interfacesEqual(lhs, rhs, strict)
 	if err != nil && opt != nil && opt.Strict {
 		return false, err
 	}

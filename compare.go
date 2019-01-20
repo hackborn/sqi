@@ -6,7 +6,9 @@ import (
 )
 
 // interfacesEqual() answers true if both interfaces are the same underlying data.
-func interfacesEqual(a, b interface{}) (bool, error) {
+// If strict is true, numbers must be of the same type. If it's false,
+// numbers will attempt to convert for a comparison.
+func interfacesEqual(a, b interface{}, strict bool) (bool, error) {
 	if a == nil && b == nil {
 		return true, nil
 	} else if a == nil || b == nil {
@@ -27,23 +29,46 @@ func interfacesEqual(a, b interface{}) (bool, error) {
 		if bt, ok := b.(int); ok {
 			return at == bt, nil
 		}
+		if !strict {
+			return numbersEqual(float64(at), b)
+		}
 		return false, newMismatchError("types " + reflect.TypeOf(a).Name() + " and " + reflect.TypeOf(b).Name())
 	case float32:
 		if bt, ok := b.(float32); ok {
 			return float64Equal(float64(at), float64(bt)), nil
+		}
+		if !strict {
+			return numbersEqual(float64(at), b)
 		}
 		return false, newMismatchError("types " + reflect.TypeOf(a).Name() + " and " + reflect.TypeOf(b).Name())
 	case float64:
 		if bt, ok := b.(float64); ok {
 			return float64Equal(at, bt), nil
 		}
+		if !strict {
+			return numbersEqual(at, b)
+		}
 		return false, newMismatchError("types " + reflect.TypeOf(a).Name() + " and " + reflect.TypeOf(b).Name())
+	default:
+		return false, newUnhandledError("type " + reflect.TypeOf(a).Name())
 	}
-	return false, newUnhandledError("type " + reflect.TypeOf(a).Name())
 }
 
 // ------------------------------------------------------------
 // MISC
+
+func numbersEqual(a float64, b interface{}) (bool, error) {
+	switch bt := b.(type) {
+	case int:
+		return float64Equal(a, float64(bt)), nil
+	case float32:
+		return float64Equal(a, float64(bt)), nil
+	case float64:
+		return float64Equal(a, bt), nil
+	default:
+		return false, newUnhandledError("type " + reflect.TypeOf(a).Name())
+	}
+}
 
 func float64Equal(a, b float64) bool {
 	return math.Abs(a-b) <= float64EqualityThreshold

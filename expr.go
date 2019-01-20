@@ -1,8 +1,6 @@
 package sqi
 
-import (
-	"errors"
-)
+import ()
 
 // --------------------------------------------------------------------------------------
 // EXPR
@@ -45,7 +43,7 @@ type expr_t struct {
 
 func (e *expr_t) Eval(input interface{}, opt *Opt) (interface{}, error) {
 	if e.ast == nil {
-		return nil, errors.New("Missing AST")
+		return nil, newEvalError("missing AST")
 	}
 	return e.ast.Eval(input, opt)
 }
