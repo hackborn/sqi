@@ -64,6 +64,11 @@ func TestParser(t *testing.T) {
 		{tokens(`(`, `a`, `==`, `b`, `)`, `||`, `(`, `c`, `==`, `d`, `)`), parser_want_9, nil},
 		{tokens(`/`, `a`, `==`, `/`, `b`, `||`, `/`, `c`, `==`, `/`, `d`), parser_want_10, nil},
 		{tokens(`(`, `/`, `a`, `==`, `/`, `b`, `)`, `||`, `(`, `/`, `c`, `==`, `/`, `d`, `)`), parser_want_10, nil},
+		{tokens(`a`, `[`, 0, `]`), parser_want_11, nil},
+		{tokens(`/`, `a`, `[`, 0, `]`), parser_want_12, nil},
+		{tokens(`/`, `a`, `/`, `b`, `[`, 0, `]`), parser_want_13, nil},
+		// Errors
+		{tokens(`(`, `a`, `[`, 0, `]`), nil, parseErr},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
@@ -90,6 +95,9 @@ var (
 	parser_want_8  = eql_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), float_n(5.5))
 	parser_want_9  = or_n(eql_n(str_n(`a`), str_n(`b`)), eql_n(str_n(`c`), str_n(`d`)))
 	parser_want_10 = or_n(eql_n(path_n(str_n(`a`), nil), path_n(str_n(`b`), nil)), eql_n(path_n(str_n(`c`), nil), path_n(str_n(`d`), nil)))
+	parser_want_11 = array_n(str_n(`a`), int_n(0))
+	parser_want_12 = array_n(path_n(str_n(`a`), nil), int_n(0))
+	parser_want_13 = array_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), int_n(0))
 )
 
 // ------------------------------------------------------------
@@ -225,6 +233,9 @@ func TestExpr(t *testing.T) {
 		{`(/Name == "Mana") || (/Age == 23)`, expr_eval_input_5, Opt{}, false, nil},
 		// Test path equality
 		{`/Mom/Name == /Mom/Name`, expr_eval_input_1, Opt{}, true, nil},
+		// Arrays
+		{`/Children[0]`, expr_eval_input_6, Opt{}, Person{Name: "a"}, nil},
+		{`/Children[1]`, expr_eval_input_6, Opt{}, Person{Name: "b"}, nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
@@ -255,6 +266,7 @@ var (
 	expr_eval_input_3 = &Person{Name: "Ana"}
 	expr_eval_input_4 = &Person{Age: 22}
 	expr_eval_input_5 = &Person{Name: "Ana", Age: 22}
+	expr_eval_input_6 = &Person{Children: []Person{Person{Name: "a"}, Person{Name: "b"}}}
 )
 
 // ------------------------------------------------------------
@@ -350,6 +362,10 @@ func tokens(all ...interface{}) []*node_t {
 		}
 	}
 	return tokens
+}
+
+func array_n(left, right *node_t) *node_t {
+	return bin_n(open_array, left, right)
 }
 
 // bin_n() constructs a binary token from the symbol

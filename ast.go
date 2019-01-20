@@ -18,6 +18,47 @@ type AstNode interface {
 }
 
 // ------------------------------------------------------------
+// ARRAY-NODE
+
+// arrayNode performs an array indexing. Currently it supports
+// a single int index.
+type arrayNode struct {
+	Lhs   AstNode
+	Index int
+}
+
+func (n *arrayNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
+	// fmt.Println("Eval arrayNode", n.Lhs, n.Index)
+	if n.Lhs == nil {
+		return nil, newMalformedError("array node")
+	}
+	lhs, err := n.Lhs.Eval(_i, opt)
+	if err != nil {
+		return nil, err
+	}
+
+	// We need to distinguish between slices, arrays, and single items
+	rt := reflect.TypeOf(lhs)
+	switch rt.Kind() {
+	case reflect.Slice:
+		src := reflect.Indirect(reflect.ValueOf(lhs))
+		if n.Index >= 0 && n.Index < src.Len() {
+			item := src.Index(n.Index)
+			return item.Interface(), nil
+		}
+	case reflect.Array:
+		fmt.Println("condition is an array with element type", rt.Elem())
+		return nil, newUnhandledError("conditionNode.Eval() on reflect.Array")
+	}
+
+	// When not in strict mode, invalid arrays are pass-throughs.
+	if opt != nil && opt.Strict {
+		return nil, newEvalError("operator [] must have array or slice")
+	}
+	return lhs, nil
+}
+
+// ------------------------------------------------------------
 // BINARY-NODE
 
 // binaryNode performs binary operations on the current interface{}.

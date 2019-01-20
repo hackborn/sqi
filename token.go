@@ -103,13 +103,15 @@ var (
 		float_token:     &token_t{float_token, "", 0, emptyNud, emptyLed},
 		string_token:    &token_t{string_token, "", 0, emptyNud, emptyLed},
 		assign_token:    &token_t{assign_token, "=", 80, emptyNud, binaryLed},
-		path_token:      &token_t{path_token, "/", 100, pathNud, binaryLed},
+		path_token:      &token_t{path_token, "/", 120, pathNud, binaryLed},
 		eql_token:       &token_t{eql_token, "==", 70, emptyNud, binaryLed},
 		neq_token:       &token_t{neq_token, "!=", 70, emptyNud, binaryLed},
 		and_token:       &token_t{and_token, "&&", 60, emptyNud, binaryLed},
 		or_token:        &token_t{or_token, "||", 60, emptyNud, binaryLed},
 		open_token:      &token_t{open_token, "(", 0, enclosedNud, emptyLed},
 		close_token:     &token_t{close_token, ")", 0, emptyNud, emptyLed},
+		open_array:      &token_t{open_array, "[", 110, emptyNud, openArrayLed},
+		close_array:     &token_t{close_array, "]", 110, emptyNud, emptyLed},
 		condition_token: &token_t{condition_token, "", 100, emptyNud, emptyLed},
 	}
 	keyword_map = map[string]*token_t{
@@ -121,6 +123,8 @@ var (
 		`||`: token_map[or_token],
 		`(`:  token_map[open_token],
 		`)`:  token_map[close_token],
+		`[`:  token_map[open_array],
+		`]`:  token_map[close_array],
 	}
 )
 
@@ -173,8 +177,29 @@ func enclosedNud(n *node_t, p *parser_t) (*node_t, error) {
 	if err != nil {
 		return nil, err
 	}
+	if next == nil {
+		return nil, newParseError("missing next for " + n.Text)
+	}
 	if next.Token.Symbol != close_token {
 		return nil, newParseError("missing close for " + n.Text)
 	}
 	return enclosed, nil
+}
+
+func openArrayLed(n *node_t, p *parser_t, left *node_t) (*node_t, error) {
+	right, err := p.Expression(n.Token.BindingPower)
+	if err != nil {
+		return nil, err
+	}
+	next, err := p.Next()
+	if err != nil {
+		return nil, err
+	}
+	if next.Token.Symbol != close_array {
+		return nil, newParseError("missing close for " + n.Text)
+	}
+
+	n.addChild(left)
+	n.addChild(right)
+	return n, nil
 }

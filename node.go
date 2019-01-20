@@ -94,6 +94,8 @@ func (n *node_t) asAst() (AstNode, error) {
 			return nil, err
 		}
 		return &unaryNode{Op: open_token, Child: child}, nil
+	case open_array:
+		return n.makeArray()
 	case path_token:
 		return n.makePath()
 	case string_token:
@@ -127,6 +129,26 @@ func (n *node_t) makeUnary() (AstNode, error) {
 		return nil, newParseError("unary has wrong number of children: " + strconv.Itoa(len(n.Children)))
 	}
 	return n.Children[0].asAst()
+}
+
+func (n *node_t) makeArray() (AstNode, error) {
+	if len(n.Children) != 2 {
+		return nil, newParseError("array has wrong number of children: " + strconv.Itoa(len(n.Children)))
+	}
+	child0 := n.Children[0]
+	child1 := n.Children[1]
+	if child1.Token.Symbol != int_token {
+		return nil, newParseError("array must have int")
+	}
+	index, err := strconv.ParseInt(child1.Text, 0, 32)
+	if err != nil {
+		return nil, err
+	}
+	lhs, err := child0.asAst()
+	if err != nil {
+		return nil, err
+	}
+	return &arrayNode{Lhs: lhs, Index: int(index)}, nil
 }
 
 func (n *node_t) makePath() (AstNode, error) {
