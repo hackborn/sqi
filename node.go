@@ -32,7 +32,7 @@ type node_t struct {
 	// future functions will require a child list.
 	//	Left     *node_t
 	//	Right    *node_t
-	Children []*node_t
+	Children []*node_t `json:"omitempty"`
 }
 
 // reclassify() converts this token into one of the defined

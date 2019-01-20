@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -36,7 +37,7 @@ func TestLexer(t *testing.T) {
 				fmt.Println("Error mismatch, have\n", have_err, "\nwant\n", tc.WantErr)
 				t.Fatal()
 			} else if !tokensMatch(have_resp, tc.WantResp) {
-				fmt.Println("Token mismatch, have\n", have_resp, "\nwant\n", tc.WantResp)
+				fmt.Println("Token mismatch, have\n", toJsonString(have_resp), "\nwant\n", toJsonString(tc.WantResp))
 				t.Fatal()
 			}
 		})
@@ -212,7 +213,7 @@ var (
 	expr_eval_input_3 = &Person{Name: "Ana"}
 	expr_eval_input_4 = &Person{Age: 22}
 	expr_eval_input_5 = &Person{Name: "Ana", Age: 22}
-	expr_eval_input_6 = &Person{Children: []Person{Person{Name: "a"}, Person{Name: "b"}}}
+	expr_eval_input_6 = &Person{Children: []Person{Person{Name: "a"}, Person{Name: "b"}, Person{Name: "c"}}}
 )
 
 // ------------------------------------------------------------
@@ -235,52 +236,7 @@ type Relative struct {
 
 // MarshalJSON() is only necessary because go randomizes the fields.
 func (p Person) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-
-	type pair_t struct {
-		Key   interface{}
-		Value interface{}
-	}
-	// XXX I'm not actually using the json metadata names but I should be.
-	ordered := []pair_t{}
-	if p.Name != "" {
-		ordered = append(ordered, pair_t{"Name", p.Name})
-	}
-	if p.Age != 0 {
-		ordered = append(ordered, pair_t{"Age", p.Age})
-	}
-	if !p.Mom.Empty() {
-		ordered = append(ordered, pair_t{"Mom", p.Mom})
-	}
-	if len(p.Children) > 0 {
-		ordered = append(ordered, pair_t{"Children", p.Children})
-	}
-	if len(p.Friends) > 0 {
-		ordered = append(ordered, pair_t{"Friends", p.Friends})
-	}
-
-	buf.WriteString("{")
-	for i, kv := range ordered {
-		if i != 0 {
-			buf.WriteString(",")
-		}
-		// marshal key
-		key, err := json.Marshal(kv.Key)
-		if err != nil {
-			return nil, err
-		}
-		buf.Write(key)
-		buf.WriteString(":")
-		// marshal value
-		val, err := json.Marshal(kv.Value)
-		if err != nil {
-			return nil, err
-		}
-		buf.Write(val)
-	}
-
-	buf.WriteString("}")
-	return buf.Bytes(), nil
+	return orderedMarshalJSON(p)
 }
 
 func (r Relative) Empty() bool {
@@ -491,21 +447,17 @@ func (t token_t) MarshalJSON() ([]byte, error) {
 // orderedMarshalJSON() is a generic function for writing ordered json data.
 func orderedMarshalJSON(src interface{}) ([]byte, error) {
 	var buf bytes.Buffer
-	type pair_t struct {
-		Key   interface{}
-		Value interface{}
-	}
-
 	v := reflect.Indirect(reflect.ValueOf(src))
 	var pairs []pair_t
 	for i := 0; i < v.NumField(); i++ {
 		val := v.Field(i)
 		field := v.Type().Field(i)
-		tag := field.Tag.Get("json")
-		if tag != "-" && len(field.Name) > 0 && field.Name[0] == strings.ToUpper(field.Name)[0] {
+		if wantsJsonField(val, field) {
 			pairs = append(pairs, pair_t{field.Name, val.Interface()})
 		}
 	}
+
+	sort.Sort(ByPair(pairs))
 
 	buf.WriteString("{")
 	for i, kv := range pairs {
@@ -530,6 +482,33 @@ func orderedMarshalJSON(src interface{}) ([]byte, error) {
 	buf.WriteString("}")
 	return buf.Bytes(), nil
 }
+
+func wantsJsonField(val reflect.Value, field reflect.StructField) bool {
+	tag := field.Tag.Get("json")
+	if tag == "-" {
+		return false
+	}
+	// Don't try and encode unexported fields. What's the official way to determine this?
+	if len(field.Name) < 1 || field.Name[0] != strings.ToUpper(field.Name)[0] {
+		return false
+	}
+	if tag == "omitempty" {
+		x := val.Interface()
+		return !(reflect.DeepEqual(x, reflect.Zero(reflect.TypeOf(x)).Interface()))
+	}
+	return true
+}
+
+type pair_t struct {
+	Key   string
+	Value interface{}
+}
+
+type ByPair []pair_t
+
+func (a ByPair) Len() int           { return len(a) }
+func (a ByPair) Less(i, j int) bool { return strings.Compare(a[i].Key, a[j].Key) < 0 }
+func (a ByPair) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 
 // ------------------------------------------------------------
 // CONVERT

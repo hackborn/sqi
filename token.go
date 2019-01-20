@@ -10,8 +10,8 @@ type token_t struct {
 	Symbol       symbol
 	Text         string
 	BindingPower int
-	nud          nudFn
-	led          ledFn
+	nud          nudFn `json:"-"`
+	led          ledFn `json:"-"`
 }
 
 // any() answers true if my symbol is any of the supplied symbols.
