@@ -6,6 +6,10 @@ import (
 
 // contextualize() insert rules specific to evaluating our rules.
 func contextualize(tree *node_t) (*node_t, error) {
+	// XXX None of the special rules are needed anymore, probably
+	// end up removing this.
+	return tree, nil
+
 	if tree == nil {
 		return tree, nil
 	}
