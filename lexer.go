@@ -85,6 +85,31 @@ func (r *ident_runer) flush() {
 	if len(r.accum) < 1 {
 		return
 	}
-	r.addToken(newNode(string_token, string(r.accum)))
+	// Recognize a token collection (i.e. tokens with no whitespace)
+	// and place the remained in a string.
+	accum := string(r.accum)
+	for accum != "" {
+		tok, s := r.extractToken(accum)
+		if tok == nil {
+			r.addToken(newNode(string_token, s))
+			accum = ""
+		} else {
+			r.addToken(newNode(tok.Symbol, tok.Text))
+			accum = s
+		}
+	}
 	r.accum = nil
+}
+
+func (r *ident_runer) extractToken(s string) (*token_t, string) {
+	var tok *token_t
+	for k, v := range keyword_map {
+		if strings.HasPrefix(s, k) && (tok == nil || len(k) > len(tok.Text)) {
+			tok = v
+		}
+	}
+	if tok == nil {
+		return nil, s
+	}
+	return tok, s[len(tok.Text):]
 }

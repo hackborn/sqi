@@ -29,6 +29,7 @@ func TestLexer(t *testing.T) {
 		{`a / b == "c"`, tokens(`a`, `/`, `b`, `==`, `"c"`), nil},
 		{`a/(b=="c"||d==10)`, tokens(`a`, `/`, `(`, `b`, `==`, `"c"`, `||`, `d`, `==`, 10, `)`), nil},
 		{`a / (b == "c" || d == 10)`, tokens(`a`, `/`, `(`, `b`, `==`, `"c"`, `||`, `d`, `==`, 10, `)`), nil},
+		{`([1]) == "b"`, tokens(`(`, `[`, 1, `]`, `)`, `==`, `"b"`), nil},
 		{`/a[0]`, tokens(`/`, `a`, `[`, 0, `]`), nil},
 		//		{`/a[ -1]`, tokens(`/`, `a`, `[`, 0, `]`), nil},
 	}
@@ -158,7 +159,7 @@ func TestExpr(t *testing.T) {
 		WantResp  interface{}
 		WantErr   error
 	}{
-		//		{`/Mom/Name`, expr_eval_input_0, Opt{}, `Ana Belle`, nil},
+		{`/Mom/Name`, expr_eval_input_0, Opt{}, `Ana Belle`, nil},
 		{`/Mom/Name == Ana`, expr_eval_input_1, Opt{}, true, nil},
 		{`(/Mom/Name) == Ana`, expr_eval_input_1, Opt{}, true, nil},
 		// Make sure quotes are removed
@@ -184,6 +185,7 @@ func TestExpr(t *testing.T) {
 		{`/Children[1]`, expr_eval_input_6, Opt{}, Person{Name: "b"}, nil},
 		{`[1]`, [2]string{"a", "b"}, Opt{}, "b", nil},
 		{`( [1] ) == "b"`, [2]string{"a", "b"}, Opt{}, true, nil},
+		{`([1]) == "b"`, [2]string{"a", "b"}, Opt{}, true, nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
