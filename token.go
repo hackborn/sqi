@@ -51,11 +51,11 @@ const (
 	float_token  // 123.45
 	string_token // "abc"
 
-	// -- BINARIES. All binary operators must be after this
-	start_binary
-
 	// Assignment
 	assign_token // =
+
+	// Negation
+	neg_token // -
 
 	// Building
 	path_token // /
@@ -76,9 +76,6 @@ const (
 
 	// -- END CONDITIONALS.
 	end_conditional
-
-	// -- END BINARIES.
-	end_binary
 
 	// -- UNARIES. All unary operators must be after this
 	start_unary
@@ -103,6 +100,7 @@ var (
 		float_token:     &token_t{float_token, "", 0, emptyNud, emptyLed},
 		string_token:    &token_t{string_token, "", 0, emptyNud, emptyLed},
 		assign_token:    &token_t{assign_token, "=", 80, emptyNud, binaryLed},
+		neg_token:       &token_t{neg_token, "", 0, emptyNud, emptyLed},
 		path_token:      &token_t{path_token, "/", 120, pathNud, binaryLed},
 		eql_token:       &token_t{eql_token, "==", 70, emptyNud, binaryLed},
 		neq_token:       &token_t{neq_token, "!=", 70, emptyNud, binaryLed},
@@ -110,12 +108,13 @@ var (
 		or_token:        &token_t{or_token, "||", 60, emptyNud, binaryLed},
 		open_token:      &token_t{open_token, "(", 0, enclosedNud, emptyLed},
 		close_token:     &token_t{close_token, ")", 0, emptyNud, emptyLed},
-		open_array:      &token_t{open_array, "[", 110, emptyNud, openArrayLed},
+		open_array:      &token_t{open_array, "[", 110, arrayNud, arrayLed},
 		close_array:     &token_t{close_array, "]", 110, emptyNud, emptyLed},
 		condition_token: &token_t{condition_token, "", 100, emptyNud, emptyLed},
 	}
 	keyword_map = map[string]*token_t{
 		`=`:  token_map[assign_token],
+		`-`:  token_map[neg_token],
 		`/`:  token_map[path_token],
 		`==`: token_map[eql_token],
 		`!=`: token_map[neq_token],
@@ -186,7 +185,24 @@ func enclosedNud(n *node_t, p *parser_t) (*node_t, error) {
 	return enclosed, nil
 }
 
-func openArrayLed(n *node_t, p *parser_t, left *node_t) (*node_t, error) {
+func arrayNud(n *node_t, p *parser_t) (*node_t, error) {
+	right, err := p.Expression(n.Token.BindingPower)
+	if err != nil {
+		return nil, err
+	}
+	next, err := p.Next()
+	if err != nil {
+		return nil, err
+	}
+	if next.Token.Symbol != close_array {
+		return nil, newParseError("missing close for " + n.Text)
+	}
+
+	n.addChild(right)
+	return n, nil
+}
+
+func arrayLed(n *node_t, p *parser_t, left *node_t) (*node_t, error) {
 	right, err := p.Expression(n.Token.BindingPower)
 	if err != nil {
 		return nil, err

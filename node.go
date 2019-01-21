@@ -106,7 +106,7 @@ func (n *node_t) asAst() (AstNode, error) {
 		text := strings.Trim(n.Text, `"`)
 		return &constantNode{Value: text}, nil
 	}
-	return nil, newParseError("on unknown token: " + strconv.Itoa(int(n.Token.Symbol)))
+	return nil, newParseError("on unknown token: " + strconv.Itoa(int(n.Token.Symbol)) + ", " + n.Token.Text)
 }
 
 func (n *node_t) makeBinary() (AstNode, AstNode, error) {
@@ -132,23 +132,46 @@ func (n *node_t) makeUnary() (AstNode, error) {
 }
 
 func (n *node_t) makeArray() (AstNode, error) {
-	if len(n.Children) != 2 {
+	// A single child is a special case -- it indicates we're at the top of the tree,
+	// and we'll operate on whatever input I receive, instead of processing a lhs.
+	var lhs AstNode
+	var childidx int
+	var err error
+
+	switch len(n.Children) {
+	case 1:
+		childidx = 0
+	case 2:
+		lhs, err = n.Children[0].asAst()
+		if err != nil {
+			return nil, err
+		}
+		childidx = 1
+	default:
 		return nil, newParseError("array has wrong number of children: " + strconv.Itoa(len(n.Children)))
 	}
-	child0 := n.Children[0]
-	child1 := n.Children[1]
-	if child1.Token.Symbol != int_token {
-		return nil, newParseError("array must have int")
-	}
-	index, err := strconv.ParseInt(child1.Text, 0, 32)
+
+	params, err := n.makeArrayParams(childidx)
 	if err != nil {
 		return nil, err
 	}
-	lhs, err := child0.asAst()
-	if err != nil {
-		return nil, err
+	return &arrayNode{Lhs: lhs, Index: params}, nil
+}
+
+// makeArrayParams() constructs the run params for an array node.
+func (n *node_t) makeArrayParams(childidx int) (int, error) {
+	if childidx < 0 || childidx >= len(n.Children) {
+		return 0, newParseError("array has missing child at " + strconv.Itoa(childidx))
 	}
-	return &arrayNode{Lhs: lhs, Index: int(index)}, nil
+	child := n.Children[childidx]
+	if child.Token.Symbol != int_token {
+		return 0, newParseError("array must have int")
+	}
+	index, err := strconv.ParseInt(child.Text, 0, 32)
+	if err != nil {
+		return 0, err
+	}
+	return int(index), nil
 }
 
 func (n *node_t) makePath() (AstNode, error) {

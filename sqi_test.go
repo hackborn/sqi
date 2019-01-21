@@ -29,6 +29,8 @@ func TestLexer(t *testing.T) {
 		{`a / b == "c"`, tokens(`a`, `/`, `b`, `==`, `"c"`), nil},
 		{`a/(b=="c"||d==10)`, tokens(`a`, `/`, `(`, `b`, `==`, `"c"`, `||`, `d`, `==`, 10, `)`), nil},
 		{`a / (b == "c" || d == 10)`, tokens(`a`, `/`, `(`, `b`, `==`, `"c"`, `||`, `d`, `==`, 10, `)`), nil},
+		{`/a[0]`, tokens(`/`, `a`, `[`, 0, `]`), nil},
+		//		{`/a[ -1]`, tokens(`/`, `a`, `[`, 0, `]`), nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
@@ -177,6 +179,8 @@ func TestExpr(t *testing.T) {
 		// Arrays
 		{`/Children[0]`, expr_eval_input_6, Opt{}, Person{Name: "a"}, nil},
 		{`/Children[1]`, expr_eval_input_6, Opt{}, Person{Name: "b"}, nil},
+		{`[1]`, [2]string{"a", "b"}, Opt{}, "b", nil},
+		//		{`( [1] ) == "b"`, [2]string{"a", "b"}, Opt{}, "a", nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
@@ -190,7 +194,8 @@ func TestExpr(t *testing.T) {
 func runTestExpr(t *testing.T, exprinput string, evalinput interface{}, opt Opt, want_resp interface{}, want_err error) {
 	expr, err := MakeExpr(exprinput)
 	if err != nil {
-		panic(err)
+		fmt.Println("make expr failed", err)
+		t.Fatal()
 	}
 	have_resp, have_err := expr.Eval(evalinput, &opt)
 	if !errorMatches(have_err, want_err) {
@@ -199,9 +204,11 @@ func runTestExpr(t *testing.T, exprinput string, evalinput interface{}, opt Opt,
 	} else if !interfaceMatches(have_resp, want_resp) {
 		fmt.Println("Response mismatch, have\n", toJsonString(have_resp), "\nwant\n", toJsonString(want_resp))
 		tokens, _ := scan(exprinput)
+		fmt.Println("after lexing\n", toJsonString(tokens))
 		tree, _ := parse(tokens)
+		fmt.Println("after parsing\n", toJsonString(tree))
 		tree, _ = contextualize(tree)
-		fmt.Println("tree is\n", toJsonString(tree))
+		fmt.Println("after contextualizing\n", toJsonString(tree))
 		t.Fatal()
 	}
 }
@@ -518,12 +525,24 @@ func toJson(i interface{}) interface{} {
 	if err != nil {
 		panic(err)
 	}
-	i2 := make(map[string]interface{})
-	err = json.Unmarshal(pbytes, &i2)
-	if err != nil {
-		panic(err)
+
+	rt := reflect.TypeOf(i)
+	switch rt.Kind() {
+	case reflect.Slice, reflect.Array:
+		i2 := make([]interface{}, 0, 0)
+		err = json.Unmarshal(pbytes, &i2)
+		if err != nil {
+			panic(err)
+		}
+		return i2
+	default:
+		i2 := make(map[string]interface{})
+		err = json.Unmarshal(pbytes, &i2)
+		if err != nil {
+			panic(err)
+		}
+		return i2
 	}
-	return i2
 }
 
 func toJsonString(i interface{}) string {

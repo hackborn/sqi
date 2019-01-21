@@ -23,18 +23,19 @@ type AstNode interface {
 // arrayNode performs an array indexing. Currently it supports
 // a single int index.
 type arrayNode struct {
-	Lhs   AstNode
+	Lhs   AstNode // Optional -- if missing then I just use my input directly
 	Index int
 }
 
 func (n *arrayNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
 	// fmt.Println("Eval arrayNode", n.Lhs, n.Index)
-	if n.Lhs == nil {
-		return nil, newMalformedError("array node")
-	}
-	lhs, err := n.Lhs.Eval(_i, opt)
-	if err != nil {
-		return nil, err
+	lhs := _i
+	if n.Lhs != nil {
+		var err error
+		lhs, err = n.Lhs.Eval(_i, opt)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// We need to distinguish between slices, arrays, and single items
@@ -47,8 +48,11 @@ func (n *arrayNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
 			return item.Interface(), nil
 		}
 	case reflect.Array:
-		fmt.Println("condition is an array with element type", rt.Elem())
-		return nil, newUnhandledError("conditionNode.Eval() on reflect.Array")
+		src := reflect.Indirect(reflect.ValueOf(lhs))
+		if n.Index >= 0 && n.Index < src.Len() {
+			item := src.Index(n.Index)
+			return item.Interface(), nil
+		}
 	}
 
 	// When not in strict mode, invalid arrays are pass-throughs.
@@ -57,6 +61,25 @@ func (n *arrayNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
 	}
 	return lhs, nil
 }
+
+// Example creating a copy of the slice/array, I'll need this when I allow multiple indexes.
+
+/*
+	src := reflect.Indirect(reflect.ValueOf(_i))
+	collectiontype := rt.Elem()
+	dst := reflect.MakeSlice(reflect.SliceOf(collectiontype), 0, src.Len())
+	for i := 0; i < src.Len(); i++ {
+		item := src.Index(i)
+		b, err := n.isTrue(item.Interface(), opt)
+		if err != nil {
+			return nil, err
+		}
+		if b {
+			dst = reflect.Append(dst, item)
+		}
+	}
+	return dst.Interface(), nil
+*/
 
 // ------------------------------------------------------------
 // BINARY-NODE
@@ -70,7 +93,7 @@ type binaryNode struct {
 
 func (n *binaryNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
 	// fmt.Println("Eval binaryNode", n.Lhs, n.Rhs)
-	if !(n.Op > start_binary && n.Op < end_binary) || n.Lhs == nil || n.Rhs == nil {
+	if n.Lhs == nil || n.Rhs == nil {
 		return nil, newMalformedError("binary node")
 	}
 	switch n.Op {
@@ -156,7 +179,7 @@ type conditionNode struct {
 }
 
 func (n *conditionNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
-	//	fmt.Println("Eval conditionNode", n.lhs, n.rhs)
+	// fmt.Println("Eval conditionNode", n.lhs, n.rhs)
 	if !(n.Op > start_unary && n.Op < end_unary) || n.Child == nil {
 		return nil, newMalformedError("condition node")
 	}
@@ -164,23 +187,22 @@ func (n *conditionNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
 	// We need to distinguish between slices, arrays, and single items
 	rt := reflect.TypeOf(_i)
 	switch rt.Kind() {
-	case reflect.Slice:
+	case reflect.Array, reflect.Slice:
+		// The compare must be true for every element.
+		fmt.Println("eval", _i, "to", n.Child)
 		src := reflect.Indirect(reflect.ValueOf(_i))
-		dst := reflect.MakeSlice(rt, 0, src.Len())
 		for i := 0; i < src.Len(); i++ {
 			item := src.Index(i)
 			b, err := n.isTrue(item.Interface(), opt)
+			fmt.Println("item", item, "istrue", b, "err", err)
 			if err != nil {
 				return nil, err
 			}
-			if b {
-				dst = reflect.Append(dst, item)
+			if !b {
+				return false, nil
 			}
 		}
-		return dst.Interface(), nil
-	case reflect.Array:
-		fmt.Println("condition is an array with element type", rt.Elem())
-		return nil, newUnhandledError("conditionNode.Eval() on reflect.Array")
+		return true, nil
 	default:
 		// When working on collections, we return a new one, but when working
 		// on single objects, we return the results of the evaluation.
