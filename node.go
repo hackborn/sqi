@@ -191,8 +191,8 @@ func (n *node_t) makePath() (AstNode, error) {
 		child0 := n.Children[0]
 		child1 := n.Children[1]
 		// Validate
-		if child0.Token.Symbol != path_token || child1.Token.Symbol != string_token {
-			return nil, newParseError("path must have path and string")
+		if child1.Token.Symbol != string_token {
+			return nil, newParseError("path must end with a string")
 		}
 		cn, err := child0.asAst()
 		if err != nil {

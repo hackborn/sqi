@@ -32,6 +32,7 @@ func TestLexer(t *testing.T) {
 		{`( [1] ) == "b"`, tokens(`(`, `[`, 1, `]`, `)`, `==`, `"b"`), nil},
 		{`([1]) == "b"`, tokens(`(`, `[`, 1, `]`, `)`, `==`, `"b"`), nil},
 		{`/a[0]`, tokens(`/`, `a`, `[`, 0, `]`), nil},
+		{`/a[0]/b`, tokens(`/`, `a`, `[`, 0, `]`, `/`, `b`), nil},
 		//		{`/a[ -1]`, tokens(`/`, `a`, `[`, 0, `]`), nil},
 	}
 	for i, tc := range cases {
@@ -71,7 +72,11 @@ func TestParser(t *testing.T) {
 		{tokens(`(`, `/`, `a`, `==`, `/`, `b`, `)`, `||`, `(`, `/`, `c`, `==`, `/`, `d`, `)`), parser_want_10, nil},
 		{tokens(`a`, `[`, 0, `]`), parser_want_11, nil},
 		{tokens(`/`, `a`, `[`, 0, `]`), parser_want_12, nil},
-		{tokens(`/`, `a`, `/`, `b`, `[`, 0, `]`), parser_want_13, nil},
+		{tokens(`/`, `a`, `[`, 0, `]`, `/`, `b`), parser_want_13, nil},
+		//		{`/Children[1]/Name`, expr_eval_input_6, Opt{}, "b", nil},
+		{tokens(`/`, `a`, `/`, `b`, `[`, 0, `]`), parser_want_14, nil},
+		{tokens(`/`, `a`, `/`, `b`, `[`, 0, `]`), parser_want_14, nil},
+
 		// Errors
 		{tokens(`(`, `a`, `[`, 0, `]`), nil, parseErr},
 	}
@@ -102,7 +107,8 @@ var (
 	parser_want_10 = or_n(eql_n(path_n(str_n(`a`), nil), path_n(str_n(`b`), nil)), eql_n(path_n(str_n(`c`), nil), path_n(str_n(`d`), nil)))
 	parser_want_11 = array_n(str_n(`a`), int_n(0))
 	parser_want_12 = array_n(path_n(str_n(`a`), nil), int_n(0))
-	parser_want_13 = array_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), int_n(0))
+	parser_want_13 = path_n(array_n(path_n(str_n(`a`), nil), int_n(0)), str_n(`b`))
+	parser_want_14 = array_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), int_n(0))
 )
 
 // ------------------------------------------------------------
@@ -184,6 +190,7 @@ func TestExpr(t *testing.T) {
 		// Arrays
 		{`/Children[0]`, expr_eval_input_6, Opt{}, Person{Name: "a"}, nil},
 		{`/Children[1]`, expr_eval_input_6, Opt{}, Person{Name: "b"}, nil},
+		{`/Children[1]/Name`, expr_eval_input_6, Opt{}, "b", nil},
 		{`[1]`, [2]string{"a", "b"}, Opt{}, "b", nil},
 		{`([1]) == "b"`, [2]string{"a", "b"}, Opt{}, true, nil},
 	}

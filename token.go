@@ -101,15 +101,15 @@ var (
 		string_token:    &token_t{string_token, "", 0, emptyNud, emptyLed},
 		assign_token:    &token_t{assign_token, "=", 80, emptyNud, binaryLed},
 		neg_token:       &token_t{neg_token, "", 0, emptyNud, emptyLed},
-		path_token:      &token_t{path_token, "/", 120, pathNud, binaryLed},
+		path_token:      &token_t{path_token, "/", 90, pathNud, binaryLed},
 		eql_token:       &token_t{eql_token, "==", 70, emptyNud, binaryLed},
 		neq_token:       &token_t{neq_token, "!=", 70, emptyNud, binaryLed},
 		and_token:       &token_t{and_token, "&&", 60, emptyNud, binaryLed},
 		or_token:        &token_t{or_token, "||", 60, emptyNud, binaryLed},
 		open_token:      &token_t{open_token, "(", 0, enclosedNud, emptyLed},
 		close_token:     &token_t{close_token, ")", 0, emptyNud, emptyLed},
-		open_array:      &token_t{open_array, "[", 110, arrayNud, arrayLed},
-		close_array:     &token_t{close_array, "]", 110, emptyNud, emptyLed},
+		open_array:      &token_t{open_array, "[", 85, arrayNud, arrayLed},
+		close_array:     &token_t{close_array, "]", 85, emptyNud, emptyLed},
 		condition_token: &token_t{condition_token, "", 100, emptyNud, emptyLed},
 	}
 	keyword_map = map[string]*token_t{
