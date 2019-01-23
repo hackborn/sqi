@@ -73,10 +73,7 @@ func TestParser(t *testing.T) {
 		{tokens(`a`, `[`, 0, `]`), parser_want_11, nil},
 		{tokens(`/`, `a`, `[`, 0, `]`), parser_want_12, nil},
 		{tokens(`/`, `a`, `[`, 0, `]`, `/`, `b`), parser_want_13, nil},
-		//		{`/Children[1]/Name`, expr_eval_input_6, Opt{}, "b", nil},
 		{tokens(`/`, `a`, `/`, `b`, `[`, 0, `]`), parser_want_14, nil},
-		{tokens(`/`, `a`, `/`, `b`, `[`, 0, `]`), parser_want_14, nil},
-
 		// Errors
 		{tokens(`(`, `a`, `[`, 0, `]`), nil, parseErr},
 	}
@@ -167,6 +164,8 @@ func TestExpr(t *testing.T) {
 		WantErr   error
 	}{
 		{`/Mom/Name`, expr_eval_input_0, Opt{}, `Ana Belle`, nil},
+		// Accommodate a special syntax that will be necessary for path queries.
+		{`/Mom/(/Name)`, expr_eval_input_0, Opt{}, `Ana Belle`, nil},
 		{`/Mom/Name == Ana`, expr_eval_input_1, Opt{}, true, nil},
 		{`(/Mom/Name) == Ana`, expr_eval_input_1, Opt{}, true, nil},
 		// Make sure quotes are removed
@@ -197,6 +196,8 @@ func TestExpr(t *testing.T) {
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			runTestExpr(t, tc.ExprInput, tc.EvalInput, tc.Opts, tc.WantResp, tc.WantErr)
+			//			printExprConstruction(tc.ExprInput)
+			//			t.Fatal()
 			// Everything that works on the struct should work on the unmarshalled json.
 			runTestExpr(t, tc.ExprInput, toJson(tc.EvalInput), tc.Opts, tc.WantResp, tc.WantErr)
 		})
@@ -207,6 +208,7 @@ func runTestExpr(t *testing.T, exprinput string, evalinput interface{}, opt Opt,
 	expr, err := MakeExpr(exprinput)
 	if err != nil {
 		fmt.Println("make expr failed", err)
+		printExprConstruction(exprinput)
 		t.Fatal()
 	}
 	have_resp, have_err := expr.Eval(evalinput, &opt)
@@ -215,14 +217,18 @@ func runTestExpr(t *testing.T, exprinput string, evalinput interface{}, opt Opt,
 		t.Fatal()
 	} else if !interfaceMatches(have_resp, want_resp) {
 		fmt.Println("Response mismatch, have\n", toJsonString(have_resp), "\nwant\n", toJsonString(want_resp))
-		tokens, _ := scan(exprinput)
-		fmt.Println("after lexing\n", toJsonString(tokens))
-		tree, _ := parse(tokens)
-		fmt.Println("after parsing\n", toJsonString(tree))
-		tree, _ = contextualize(tree)
-		fmt.Println("after contextualizing\n", toJsonString(tree))
+		printExprConstruction(exprinput)
 		t.Fatal()
 	}
+}
+
+func printExprConstruction(exprinput string) {
+	tokens, _ := scan(exprinput)
+	fmt.Println("after lexing\n", toJsonString(tokens))
+	tree, _ := parse(tokens)
+	fmt.Println("after parsing\n", toJsonString(tree))
+	tree, _ = contextualize(tree)
+	fmt.Println("after contextualizing\n", toJsonString(tree))
 }
 
 var (

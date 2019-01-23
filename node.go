@@ -56,7 +56,7 @@ func (n *node_t) addChild(child *node_t) {
 
 // asAst() returns the AST node for this tree node.
 func (n *node_t) asAst() (AstNode, error) {
-	//	fmt.Println("ast", n.Text)
+	// fmt.Println("ast", n.Text)
 	switch n.Token.Symbol {
 	case eql_token, neq_token, and_token, or_token:
 		lhs, rhs, err := n.makeBinary()
@@ -181,15 +181,23 @@ func (n *node_t) makePath() (AstNode, error) {
 	switch len(n.Children) {
 	case 1:
 		child0 := n.Children[0]
+		// Parentheses can stack multiple paths. Consume them.
+		for child0.Token.Symbol == path_token && len(child0.Children) == 1 {
+			child0 = child0.Children[0]
+		}
 		// Validate
 		if child0.Token.Symbol != string_token {
-			return nil, newParseError("path must have string")
+			return nil, newParseError("path must have string instead of " + child0.Token.Text)
 		}
 		text := strings.Trim(child0.Text, `"`)
 		return &pathNode{Field: &fieldNode{Field: text}}, nil
 	case 2:
 		child0 := n.Children[0]
 		child1 := n.Children[1]
+		// Parentheses can stack multiple paths. Consume them.
+		for child1.Token.Symbol == path_token && len(child1.Children) == 1 {
+			child1 = child1.Children[0]
+		}
 		// Validate
 		if child1.Token.Symbol != string_token {
 			return nil, newParseError("path must end with a string")
