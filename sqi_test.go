@@ -53,6 +53,22 @@ func TestLexer(t *testing.T) {
 // TEST-PARSER
 
 func TestParser(t *testing.T) {
+	parser_want_0 := str_n(`a`)
+	parser_want_1 := path_n(path_n(str_n(`a`), nil), str_n(`b`))
+	parser_want_2 := path_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), str_n(`c`))
+	parser_want_3 := eql_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), str_n(`c`))
+	parser_want_4 := str_n(`a`)
+	parser_want_6 := eql_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), str_n(`c`))
+	parser_want_7 := eql_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), int_n(10))
+	parser_want_8 := eql_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), float_n(5.5))
+	parser_want_9 := or_n(eql_n(str_n(`a`), str_n(`b`)), eql_n(str_n(`c`), str_n(`d`)))
+	parser_want_10 := or_n(eql_n(path_n(str_n(`a`), nil), path_n(str_n(`b`), nil)), eql_n(path_n(str_n(`c`), nil), path_n(str_n(`d`), nil)))
+	parser_want_11 := array_n(str_n(`a`), int_n(0))
+	parser_want_12 := array_n(path_n(str_n(`a`), nil), int_n(0))
+	parser_want_13 := path_n(array_n(path_n(str_n(`a`), nil), int_n(0)), str_n(`b`))
+	parser_want_14 := array_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), int_n(0))
+	parser_want_15 := path_n(path_n(str_n(`a`), nil), eql_n(path_n(str_n(`b`), nil), str_n(`c`)))
+
 	cases := []struct {
 		Input    []*node_t
 		WantResp *node_t
@@ -92,28 +108,13 @@ func TestParser(t *testing.T) {
 	}
 }
 
-var (
-	parser_want_0  = str_n(`a`)
-	parser_want_1  = path_n(path_n(str_n(`a`), nil), str_n(`b`))
-	parser_want_2  = path_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), str_n(`c`))
-	parser_want_3  = eql_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), str_n(`c`))
-	parser_want_4  = str_n(`a`)
-	parser_want_6  = eql_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), str_n(`c`))
-	parser_want_7  = eql_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), int_n(10))
-	parser_want_8  = eql_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), float_n(5.5))
-	parser_want_9  = or_n(eql_n(str_n(`a`), str_n(`b`)), eql_n(str_n(`c`), str_n(`d`)))
-	parser_want_10 = or_n(eql_n(path_n(str_n(`a`), nil), path_n(str_n(`b`), nil)), eql_n(path_n(str_n(`c`), nil), path_n(str_n(`d`), nil)))
-	parser_want_11 = array_n(str_n(`a`), int_n(0))
-	parser_want_12 = array_n(path_n(str_n(`a`), nil), int_n(0))
-	parser_want_13 = path_n(array_n(path_n(str_n(`a`), nil), int_n(0)), str_n(`b`))
-	parser_want_14 = array_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), int_n(0))
-	parser_want_15 = path_n(path_n(str_n(`a`), nil), eql_n(path_n(str_n(`b`), nil), str_n(`c`)))
-)
-
 // ------------------------------------------------------------
 // TEST-CONTEXTUALIZER
 
 func TestContextualizer(t *testing.T) {
+	ctx_input_0 := path_n(path_n(str_n(`a`), nil), eql_n(path_n(str_n(`b`), nil), str_n(`c`)))
+	ctx_want_0 := path_n(path_n(str_n(`a`), nil), sel_n(eql_n(path_n(str_n(`b`), nil), str_n(`c`))))
+
 	cases := []struct {
 		Input    *node_t
 		WantResp *node_t
@@ -136,15 +137,18 @@ func TestContextualizer(t *testing.T) {
 	}
 }
 
-var (
-	ctx_input_0 = path_n(path_n(str_n(`a`), nil), eql_n(path_n(str_n(`b`), nil), str_n(`c`)))
-	ctx_want_0  = path_n(path_n(str_n(`a`), nil), sel_n(eql_n(path_n(str_n(`b`), nil), str_n(`c`))))
-)
-
 // ------------------------------------------------------------
 // TEST-EXPR
 
 func TestExpr(t *testing.T) {
+	input_0 := &Person{Mom: Relative{Name: "Ana Belle"}}
+	input_1 := &Person{Mom: Relative{Name: "Ana"}}
+	input_2 := &Person{Name: "Ana Belle"}
+	input_3 := &Person{Name: "Ana"}
+	input_4 := &Person{Age: 22}
+	input_5 := &Person{Name: "Ana", Age: 22}
+	input_6 := &Person{Children: []Person{Person{Name: "a"}, Person{Name: "b"}, Person{Name: "c"}}}
+
 	cases := []struct {
 		ExprInput string
 		EvalInput interface{}
@@ -152,37 +156,37 @@ func TestExpr(t *testing.T) {
 		WantResp  interface{}
 		WantErr   error
 	}{
-		{`/Mom/Name`, expr_eval_input_0, Opt{}, `Ana Belle`, nil},
+		{`/Mom/Name`, input_0, Opt{}, `Ana Belle`, nil},
 		// Accommodate a special syntax that will be necessary for path queries.
-		{`/Mom/(/Name)`, expr_eval_input_0, Opt{}, `Ana Belle`, nil},
-		{`/Mom/Name == Ana`, expr_eval_input_1, Opt{}, true, nil},
-		{`(/Mom/Name) == Ana`, expr_eval_input_1, Opt{}, true, nil},
+		{`/Mom/(/Name)`, input_0, Opt{}, `Ana Belle`, nil},
+		{`/Mom/Name == Ana`, input_1, Opt{}, true, nil},
+		{`(/Mom/Name) == Ana`, input_1, Opt{}, true, nil},
 		// Make sure quotes are removed
-		{`/Name == "Ana Belle"`, expr_eval_input_2, Opt{}, true, nil},
+		{`/Name == "Ana Belle"`, input_2, Opt{}, true, nil},
 		// Strictness -- by default strict is off, and incompatibile comparisons result in false.
-		{`/Name == 22`, expr_eval_input_3, Opt{Strict: false}, false, nil},
+		{`/Name == 22`, input_3, Opt{Strict: false}, false, nil},
 		// Strictness -- if strict is on, report error with incompatible comparisons.
-		{`/Name == 22`, expr_eval_input_3, Opt{Strict: true}, false, mismatchErr},
+		{`/Name == 22`, input_3, Opt{Strict: true}, false, mismatchErr},
 		// Int evalation, equal and not equal.
-		{`/Age == 22`, expr_eval_input_4, Opt{}, true, nil},
-		{`/Age != 22`, expr_eval_input_4, Opt{}, false, nil},
+		{`/Age == 22`, input_4, Opt{}, true, nil},
+		{`/Age != 22`, input_4, Opt{}, false, nil},
 		// Compound comparisons.
-		{`/Name == "Ana" && /Age == 22`, expr_eval_input_5, Opt{}, true, nil},
-		{`(/Name == "Ana") && (/Age == 22)`, expr_eval_input_5, Opt{}, true, nil},
-		{`/Name == "Ana" || /Age == 23`, expr_eval_input_5, Opt{}, true, nil},
-		{`(/Name == "Ana") || (/Age == 23)`, expr_eval_input_5, Opt{}, true, nil},
-		{`(/Name == "Mana") || (/Age == 22)`, expr_eval_input_5, Opt{}, true, nil},
-		{`(/Name == "Mana") || (/Age == 23)`, expr_eval_input_5, Opt{}, false, nil},
+		{`/Name == "Ana" && /Age == 22`, input_5, Opt{}, true, nil},
+		{`(/Name == "Ana") && (/Age == 22)`, input_5, Opt{}, true, nil},
+		{`/Name == "Ana" || /Age == 23`, input_5, Opt{}, true, nil},
+		{`(/Name == "Ana") || (/Age == 23)`, input_5, Opt{}, true, nil},
+		{`(/Name == "Mana") || (/Age == 22)`, input_5, Opt{}, true, nil},
+		{`(/Name == "Mana") || (/Age == 23)`, input_5, Opt{}, false, nil},
 		// Path equality
-		{`/Mom/Name == /Mom/Name`, expr_eval_input_1, Opt{}, true, nil},
+		{`/Mom/Name == /Mom/Name`, input_1, Opt{}, true, nil},
 		// Select
-		{`/Children/(/Name == "c")`, expr_eval_input_6, Opt{}, []Person{Person{Name: "c"}}, nil},
+		{`/Children/(/Name == "c")`, input_6, Opt{}, []Person{Person{Name: "c"}}, nil},
 		// Select, unwinding the results to a single item
-		{`(/Children/(/Name == "c"))[0]`, expr_eval_input_6, Opt{}, Person{Name: "c"}, nil},
+		{`(/Children/(/Name == "c"))[0]`, input_6, Opt{}, Person{Name: "c"}, nil},
 		// Arrays
-		{`/Children[0]`, expr_eval_input_6, Opt{}, Person{Name: "a"}, nil},
-		{`/Children[1]`, expr_eval_input_6, Opt{}, Person{Name: "b"}, nil},
-		{`/Children[1]/Name`, expr_eval_input_6, Opt{}, "b", nil},
+		{`/Children[0]`, input_6, Opt{}, Person{Name: "a"}, nil},
+		{`/Children[1]`, input_6, Opt{}, Person{Name: "b"}, nil},
+		{`/Children[1]/Name`, input_6, Opt{}, "b", nil},
 		{`[1]`, [2]string{"a", "b"}, Opt{}, "b", nil},
 		{`([1]) == "b"`, [2]string{"a", "b"}, Opt{}, true, nil},
 	}
@@ -213,24 +217,93 @@ func runTestExpr(t *testing.T, exprinput string, evalinput interface{}, opt Opt,
 	}
 }
 
-func printExprConstruction(exprinput string) {
-	tokens, _ := scan(exprinput)
-	fmt.Println("after lexing\n", toJsonString(tokens))
-	tree, _ := parse(tokens)
-	fmt.Println("after parsing\n", toJsonString(tree))
-	tree, _ = contextualize(tree)
-	fmt.Println("after contextualizing\n", toJsonString(tree))
+// ------------------------------------------------------------
+// TEST-EVAL-FLOAT64
+
+func TestEvalFloat64(t *testing.T) {
+	type Metric struct {
+		Level float64
+	}
+
+	input_0 := &Metric{Level: 46.8}
+
+	cases := []struct {
+		Term     string
+		Input    interface{}
+		Opt      *Opt
+		WantResp float64
+	}{
+		{`/Level`, input_0, nil, 46.8},
+		{`/NoLevel`, input_0, nil, 0},
+		{`/ErrorLevel`, input_0, &Opt{OnError: 10.0}, 10.0},
+	}
+	for i, tc := range cases {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			have_resp := EvalFloat64(tc.Term, tc.Input, tc.Opt)
+			if have_resp != tc.WantResp {
+				fmt.Println("Response mismatch, have\n", have_resp, "\nwant\n", tc.WantResp)
+				printExprConstruction(tc.Term)
+				t.Fatal()
+			}
+		})
+	}
 }
 
-var (
-	expr_eval_input_0 = &Person{Mom: Relative{Name: "Ana Belle"}}
-	expr_eval_input_1 = &Person{Mom: Relative{Name: "Ana"}}
-	expr_eval_input_2 = &Person{Name: "Ana Belle"}
-	expr_eval_input_3 = &Person{Name: "Ana"}
-	expr_eval_input_4 = &Person{Age: 22}
-	expr_eval_input_5 = &Person{Name: "Ana", Age: 22}
-	expr_eval_input_6 = &Person{Children: []Person{Person{Name: "a"}, Person{Name: "b"}, Person{Name: "c"}}}
-)
+// ------------------------------------------------------------
+// TEST-EVAL-INT
+
+func TestEvalInt(t *testing.T) {
+	input_0 := &Person{Age: 32}
+
+	cases := []struct {
+		Term     string
+		Input    interface{}
+		Opt      *Opt
+		WantResp int
+	}{
+		{`/Age`, input_0, nil, 32},
+		{`/NoAge`, input_0, nil, 0},
+		{`/ErrorAge`, input_0, &Opt{OnError: 10}, 10},
+	}
+	for i, tc := range cases {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			have_resp := EvalInt(tc.Term, tc.Input, tc.Opt)
+			if have_resp != tc.WantResp {
+				fmt.Println("Response mismatch, have\n", strconv.Itoa(have_resp), "\nwant\n", strconv.Itoa(tc.WantResp))
+				printExprConstruction(tc.Term)
+				t.Fatal()
+			}
+		})
+	}
+}
+
+// ------------------------------------------------------------
+// TEST-EVAL-STRING
+
+func TestEvalString(t *testing.T) {
+	input_0 := &Person{Name: "Ana"}
+
+	cases := []struct {
+		Term     string
+		Input    interface{}
+		Opt      *Opt
+		WantResp string
+	}{
+		{`/Name`, input_0, nil, `Ana`},
+		{`/NoName`, input_0, nil, ``},
+		{`/ErrorName`, input_0, &Opt{OnError: `zip`}, `zip`},
+	}
+	for i, tc := range cases {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			have_resp := EvalString(tc.Term, tc.Input, tc.Opt)
+			if have_resp != tc.WantResp {
+				fmt.Println("Response mismatch, have\n", have_resp, "\nwant\n", tc.WantResp)
+				printExprConstruction(tc.Term)
+				t.Fatal()
+			}
+		})
+	}
+}
 
 // ------------------------------------------------------------
 // MODEL
@@ -253,10 +326,6 @@ type Relative struct {
 // MarshalJSON() is only necessary because go randomizes the fields.
 func (p Person) MarshalJSON() ([]byte, error) {
 	return orderedMarshalJSON(p)
-}
-
-func (r Relative) Empty() bool {
-	return r.Name == ""
 }
 
 // ------------------------------------------------------------
@@ -336,64 +405,15 @@ func mk_unary(sym symbol, child *node_t) *node_t {
 }
 
 // ------------------------------------------------------------
-// BUILD (ast)
+// REPORT
 
-func and_a(lhs, rhs interface{}) AstNode {
-	return &binaryNode{Op: and_token, Lhs: wrap_field_a(lhs), Rhs: wrap_field_a(rhs)}
-}
-
-func eql_a(lhs, rhs interface{}) AstNode {
-	return &binaryNode{Op: eql_token, Lhs: wrap_field_a(lhs), Rhs: wrap_field_a(rhs)}
-}
-
-func field_a(name string) AstNode {
-	return &fieldNode{Field: name}
-}
-
-func float_a(value float64) AstNode {
-	return &constantNode{Value: value}
-}
-
-func int_a(value int) AstNode {
-	return &constantNode{Value: value}
-}
-
-func or_a(lhs, rhs interface{}) AstNode {
-	return &binaryNode{Op: or_token, Lhs: wrap_field_a(lhs), Rhs: wrap_field_a(rhs)}
-}
-
-func paren_a(child AstNode) AstNode {
-	return &unaryNode{Op: open_token, Child: child}
-}
-
-func path_a(child, field AstNode) AstNode {
-	return &pathNode{Child: child, Field: field}
-}
-
-func string_a(value string) AstNode {
-	return &constantNode{Value: value}
-}
-
-func wrap_field_a(a interface{}) AstNode {
-	switch t := a.(type) {
-	case string:
-		return field_a(t)
-	case AstNode:
-		return t
-	default:
-		panic(a)
-	}
-}
-
-func wrap_string_n(a interface{}) AstNode {
-	switch t := a.(type) {
-	case string:
-		return string_a(t)
-	case AstNode:
-		return t
-	default:
-		panic(a)
-	}
+func printExprConstruction(exprinput string) {
+	tokens, _ := scan(exprinput)
+	fmt.Println("after lexing\n", toJsonString(tokens))
+	tree, _ := parse(tokens)
+	fmt.Println("after parsing\n", toJsonString(tree))
+	tree, _ = contextualize(tree)
+	fmt.Println("after contextualizing\n", toJsonString(tree))
 }
 
 // ------------------------------------------------------------
