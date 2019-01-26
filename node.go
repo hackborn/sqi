@@ -64,12 +64,6 @@ func (n *node_t) asAst() (AstNode, error) {
 			return nil, err
 		}
 		return &binaryNode{Op: n.Token.Symbol, Lhs: lhs, Rhs: rhs}, nil
-	case condition_token:
-		child, err := n.makeUnary()
-		if err != nil {
-			return nil, err
-		}
-		return &conditionNode{Op: open_token, Child: child}, nil
 	case float_token:
 		if len(n.Children) != 0 {
 			return nil, newParseError("float has wrong number of children: " + strconv.Itoa(len(n.Children)))
@@ -105,6 +99,12 @@ func (n *node_t) asAst() (AstNode, error) {
 		// Unwrap quoted text, which has served its purpose of allowing special characters.
 		text := strings.Trim(n.Text, `"`)
 		return &constantNode{Value: text}, nil
+	case select_token:
+		child, err := n.makeUnary()
+		if err != nil {
+			return nil, err
+		}
+		return &selectNode{Child: child}, nil
 	}
 	return nil, newParseError("on unknown token: " + strconv.Itoa(int(n.Token.Symbol)) + ", " + n.Token.Text)
 }
@@ -198,16 +198,23 @@ func (n *node_t) makePath() (AstNode, error) {
 		for child1.Token.Symbol == path_token && len(child1.Children) == 1 {
 			child1 = child1.Children[0]
 		}
-		// Validate
-		if child1.Token.Symbol != string_token {
-			return nil, newParseError("path must end with a string")
+		// If we end in a string, we need to wrap
+		var child1Ast AstNode
+		if child1.Token.Symbol == string_token {
+			text := strings.Trim(child1.Text, `"`)
+			child1Ast = &fieldNode{Field: text}
+		} else {
+			c1n, err := child1.asAst()
+			if err != nil {
+				return nil, err
+			}
+			child1Ast = c1n
 		}
 		cn, err := child0.asAst()
 		if err != nil {
 			return nil, err
 		}
-		text := strings.Trim(child1.Text, `"`)
-		return &pathNode{Child: cn, Field: &fieldNode{Field: text}}, nil
+		return &pathNode{Child: cn, Field: child1Ast}, nil
 	default:
 		return nil, newParseError("path has wrong number of children: " + strconv.Itoa(len(n.Children)))
 	}

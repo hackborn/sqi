@@ -2,7 +2,6 @@ package sqi
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"strconv"
 )
@@ -61,25 +60,6 @@ func (n *arrayNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
 	}
 	return lhs, nil
 }
-
-// Example creating a copy of the slice/array, I'll need this when I allow multiple indexes.
-
-/*
-	src := reflect.Indirect(reflect.ValueOf(_i))
-	collectiontype := rt.Elem()
-	dst := reflect.MakeSlice(reflect.SliceOf(collectiontype), 0, src.Len())
-	for i := 0; i < src.Len(); i++ {
-		item := src.Index(i)
-		b, err := n.isTrue(item.Interface(), opt)
-		if err != nil {
-			return nil, err
-		}
-		if b {
-			dst = reflect.Append(dst, item)
-		}
-	}
-	return dst.Interface(), nil
-*/
 
 // ------------------------------------------------------------
 // BINARY-NODE
@@ -169,60 +149,6 @@ func (n *binaryNode) evalBinary(_i interface{}, opt *Opt) (interface{}, interfac
 }
 
 // ------------------------------------------------------------
-// CONDITION-NODE
-
-// conditionNode is a unary that filters the incoming interface
-// by a boolean condition. The node it contains must respond with true or false.
-type conditionNode struct {
-	Op    symbol
-	Child AstNode
-}
-
-func (n *conditionNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
-	// fmt.Println("Eval conditionNode", n.lhs, n.rhs)
-	if !(n.Op > start_unary && n.Op < end_unary) || n.Child == nil {
-		return nil, newMalformedError("condition node")
-	}
-	// Every item in _i is evaluated to true or false.
-	// We need to distinguish between slices, arrays, and single items
-	rt := reflect.TypeOf(_i)
-	switch rt.Kind() {
-	case reflect.Array, reflect.Slice:
-		// The compare must be true for every element.
-		fmt.Println("eval", _i, "to", n.Child)
-		src := reflect.Indirect(reflect.ValueOf(_i))
-		for i := 0; i < src.Len(); i++ {
-			item := src.Index(i)
-			b, err := n.isTrue(item.Interface(), opt)
-			fmt.Println("item", item, "istrue", b, "err", err)
-			if err != nil {
-				return nil, err
-			}
-			if !b {
-				return false, nil
-			}
-		}
-		return true, nil
-	default:
-		// When working on collections, we return a new one, but when working
-		// on single objects, we return the results of the evaluation.
-		return n.isTrue(_i, opt)
-	}
-}
-
-// isTrue() determines if my child evaluates to true based on the input.
-func (n *conditionNode) isTrue(_i interface{}, opt *Opt) (bool, error) {
-	resp, err := n.Child.Eval(_i, opt)
-	if err != nil {
-		return false, err
-	}
-	if b, ok := resp.(bool); ok {
-		return b, nil
-	}
-	return false, newConditionError("must be boolean")
-}
-
-// ------------------------------------------------------------
 // CONSTANT-NODE
 
 // constantNode returns a constant value (string, float, etc.).
@@ -306,6 +232,59 @@ func (n *pathNode) Eval(i interface{}, opt *Opt) (interface{}, error) {
 		}
 	}
 	return n.Field.Eval(i, opt)
+}
+
+// ------------------------------------------------------------
+// SELECT-NODE
+
+// selectnNode is a select statement: It expects a collection
+// of items, and a child that will resolve each item to
+// true or false. It answers the result of all true evaluations.
+type selectNode struct {
+	Child AstNode
+}
+
+func (n *selectNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
+	// fmt.Println("Eval selectNode", n.Child)
+	if n.Child == nil {
+		return nil, newMalformedError("select node")
+	}
+	rt := reflect.TypeOf(_i)
+	switch rt.Kind() {
+	case reflect.Array, reflect.Slice:
+		src := reflect.Indirect(reflect.ValueOf(_i))
+		collectiontype := rt.Elem()
+		dst := reflect.MakeSlice(reflect.SliceOf(collectiontype), 0, src.Len())
+		for i := 0; i < src.Len(); i++ {
+			item := src.Index(i)
+			b, err := n.isTrue(item.Interface(), opt)
+			if err != nil {
+				return nil, err
+			}
+			if b {
+				dst = reflect.Append(dst, item)
+			}
+		}
+		return dst.Interface(), nil
+	default:
+		// It's an open question what to do when operating selects on
+		// non-collections. I'm inclined to think of this as a search,
+		// and no search results are returned, but I could see a mode
+		// that made this an error condition.
+		return nil, nil
+	}
+}
+
+// isTrue() determines if my child evaluates to true based on the input.
+func (n *selectNode) isTrue(_i interface{}, opt *Opt) (bool, error) {
+	resp, err := n.Child.Eval(_i, opt)
+	if err != nil {
+		return false, err
+	}
+	if b, ok := resp.(bool); ok {
+		return b, nil
+	}
+	return false, newEvalError("must result ine boolean")
 }
 
 // ------------------------------------------------------------

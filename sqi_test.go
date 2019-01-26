@@ -74,6 +74,7 @@ func TestParser(t *testing.T) {
 		{tokens(`/`, `a`, `[`, 0, `]`), parser_want_12, nil},
 		{tokens(`/`, `a`, `[`, 0, `]`, `/`, `b`), parser_want_13, nil},
 		{tokens(`/`, `a`, `/`, `b`, `[`, 0, `]`), parser_want_14, nil},
+		{tokens(`/`, `a`, `/`, `(`, `/`, `b`, `==`, `c`, `)`), parser_want_15, nil},
 		// Errors
 		{tokens(`(`, `a`, `[`, 0, `]`), nil, parseErr},
 	}
@@ -106,26 +107,20 @@ var (
 	parser_want_12 = array_n(path_n(str_n(`a`), nil), int_n(0))
 	parser_want_13 = path_n(array_n(path_n(str_n(`a`), nil), int_n(0)), str_n(`b`))
 	parser_want_14 = array_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), int_n(0))
+	parser_want_15 = path_n(path_n(str_n(`a`), nil), eql_n(path_n(str_n(`b`), nil), str_n(`c`)))
 )
 
 // ------------------------------------------------------------
 // TEST-CONTEXTUALIZER
 
 func TestContextualizer(t *testing.T) {
-	// XXX All special rules have been disabled. Currently don't see bringing them back.
-	return
-
 	cases := []struct {
 		Input    *node_t
 		WantResp *node_t
 		WantErr  error
 	}{
-		// A string
+		// A select
 		{ctx_input_0, ctx_want_0, nil},
-		// A field
-		{ctx_input_1, ctx_want_1, nil},
-		// A conditional and field/string
-		{ctx_input_2, ctx_want_2, nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
@@ -142,14 +137,8 @@ func TestContextualizer(t *testing.T) {
 }
 
 var (
-	ctx_input_0 = str_n(`a`)
-	ctx_want_0  = str_n(`a`)
-
-	ctx_input_1 = path_n(str_n(`a`), str_n(`b`))
-	ctx_want_1  = path_n(str_n(`a`), str_n(`b`))
-
-	ctx_input_2 = eql_n(str_n(`a`), str_n(`b`))
-	ctx_want_2  = mk_unary(condition_token, eql_n(str_n(`a`), str_n(`b`)))
+	ctx_input_0 = path_n(path_n(str_n(`a`), nil), eql_n(path_n(str_n(`b`), nil), str_n(`c`)))
+	ctx_want_0  = path_n(path_n(str_n(`a`), nil), sel_n(eql_n(path_n(str_n(`b`), nil), str_n(`c`))))
 )
 
 // ------------------------------------------------------------
@@ -170,22 +159,26 @@ func TestExpr(t *testing.T) {
 		{`(/Mom/Name) == Ana`, expr_eval_input_1, Opt{}, true, nil},
 		// Make sure quotes are removed
 		{`/Name == "Ana Belle"`, expr_eval_input_2, Opt{}, true, nil},
-		// Test strictness -- by default strict is off, and incompatibile comparisons result in false.
+		// Strictness -- by default strict is off, and incompatibile comparisons result in false.
 		{`/Name == 22`, expr_eval_input_3, Opt{Strict: false}, false, nil},
-		// Test strictness -- if strict is on, report error with incompatible comparisons.
+		// Strictness -- if strict is on, report error with incompatible comparisons.
 		{`/Name == 22`, expr_eval_input_3, Opt{Strict: true}, false, mismatchErr},
-		// Test int evalation, equal and not equal.
+		// Int evalation, equal and not equal.
 		{`/Age == 22`, expr_eval_input_4, Opt{}, true, nil},
 		{`/Age != 22`, expr_eval_input_4, Opt{}, false, nil},
-		// Test compound comparisons.
+		// Compound comparisons.
 		{`/Name == "Ana" && /Age == 22`, expr_eval_input_5, Opt{}, true, nil},
 		{`(/Name == "Ana") && (/Age == 22)`, expr_eval_input_5, Opt{}, true, nil},
 		{`/Name == "Ana" || /Age == 23`, expr_eval_input_5, Opt{}, true, nil},
 		{`(/Name == "Ana") || (/Age == 23)`, expr_eval_input_5, Opt{}, true, nil},
 		{`(/Name == "Mana") || (/Age == 22)`, expr_eval_input_5, Opt{}, true, nil},
 		{`(/Name == "Mana") || (/Age == 23)`, expr_eval_input_5, Opt{}, false, nil},
-		// Test path equality
+		// Path equality
 		{`/Mom/Name == /Mom/Name`, expr_eval_input_1, Opt{}, true, nil},
+		// Select
+		{`/Children/(/Name == "c")`, expr_eval_input_6, Opt{}, []Person{Person{Name: "c"}}, nil},
+		// Select, unwinding the results to a single item
+		{`(/Children/(/Name == "c"))[0]`, expr_eval_input_6, Opt{}, Person{Name: "c"}, nil},
 		// Arrays
 		{`/Children[0]`, expr_eval_input_6, Opt{}, Person{Name: "a"}, nil},
 		{`/Children[1]`, expr_eval_input_6, Opt{}, Person{Name: "b"}, nil},
@@ -196,8 +189,6 @@ func TestExpr(t *testing.T) {
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			runTestExpr(t, tc.ExprInput, tc.EvalInput, tc.Opts, tc.WantResp, tc.WantErr)
-			//			printExprConstruction(tc.ExprInput)
-			//			t.Fatal()
 			// Everything that works on the struct should work on the unmarshalled json.
 			runTestExpr(t, tc.ExprInput, toJson(tc.EvalInput), tc.Opts, tc.WantResp, tc.WantErr)
 		})
@@ -329,6 +320,10 @@ func path_n(left, right *node_t) *node_t {
 	return b
 }
 
+func sel_n(child *node_t) *node_t {
+	return mk_unary(select_token, child)
+}
+
 func str_n(text string) *node_t {
 	return newNode(string_token, text)
 }
@@ -345,10 +340,6 @@ func mk_unary(sym symbol, child *node_t) *node_t {
 
 func and_a(lhs, rhs interface{}) AstNode {
 	return &binaryNode{Op: and_token, Lhs: wrap_field_a(lhs), Rhs: wrap_field_a(rhs)}
-}
-
-func cnd_a(child AstNode) AstNode {
-	return &conditionNode{Op: condition_token, Child: child}
 }
 
 func eql_a(lhs, rhs interface{}) AstNode {

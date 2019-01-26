@@ -87,7 +87,7 @@ const (
 	close_array // ]
 
 	// True/false condition
-	condition_token
+	select_token
 
 	// -- END UNARIES.
 	end_unary
@@ -95,22 +95,22 @@ const (
 
 var (
 	token_map = map[symbol]*token_t{
-		illegal_token:   &token_t{illegal_token, "", 0, emptyNud, emptyLed},
-		int_token:       &token_t{int_token, "", 0, emptyNud, emptyLed},
-		float_token:     &token_t{float_token, "", 0, emptyNud, emptyLed},
-		string_token:    &token_t{string_token, "", 0, emptyNud, emptyLed},
-		assign_token:    &token_t{assign_token, "=", 80, emptyNud, binaryLed},
-		neg_token:       &token_t{neg_token, "", 0, emptyNud, emptyLed},
-		path_token:      &token_t{path_token, "/", 90, pathNud, binaryLed},
-		eql_token:       &token_t{eql_token, "==", 70, emptyNud, binaryLed},
-		neq_token:       &token_t{neq_token, "!=", 70, emptyNud, binaryLed},
-		and_token:       &token_t{and_token, "&&", 60, emptyNud, binaryLed},
-		or_token:        &token_t{or_token, "||", 60, emptyNud, binaryLed},
-		open_token:      &token_t{open_token, "(", 0, enclosedNud, emptyLed},
-		close_token:     &token_t{close_token, ")", 0, emptyNud, emptyLed},
-		open_array:      &token_t{open_array, "[", 85, arrayNud, arrayLed},
-		close_array:     &token_t{close_array, "]", 85, emptyNud, emptyLed},
-		condition_token: &token_t{condition_token, "", 100, emptyNud, emptyLed},
+		illegal_token: &token_t{illegal_token, "", 0, emptyNud, emptyLed},
+		int_token:     &token_t{int_token, "", 0, emptyNud, emptyLed},
+		float_token:   &token_t{float_token, "", 0, emptyNud, emptyLed},
+		string_token:  &token_t{string_token, "", 0, emptyNud, emptyLed},
+		assign_token:  &token_t{assign_token, "=", 80, emptyNud, binaryLed},
+		neg_token:     &token_t{neg_token, "", 0, emptyNud, emptyLed},
+		path_token:    &token_t{path_token, "/", 90, pathNud, binaryLed},
+		eql_token:     &token_t{eql_token, "==", 70, emptyNud, binaryLed},
+		neq_token:     &token_t{neq_token, "!=", 70, emptyNud, binaryLed},
+		and_token:     &token_t{and_token, "&&", 60, emptyNud, binaryLed},
+		or_token:      &token_t{or_token, "||", 60, emptyNud, binaryLed},
+		open_token:    &token_t{open_token, "(", 0, enclosedNud, emptyLed},
+		close_token:   &token_t{close_token, ")", 0, emptyNud, emptyLed},
+		open_array:    &token_t{open_array, "[", 85, arrayNud, arrayLed},
+		close_array:   &token_t{close_array, "]", 85, emptyNud, emptyLed},
+		select_token:  &token_t{select_token, "", 100, emptyNud, emptyLed},
 	}
 	keyword_map = map[string]*token_t{
 		`=`:  token_map[assign_token],

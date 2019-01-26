@@ -4,12 +4,8 @@ import (
 	"fmt"
 )
 
-// contextualize() insert rules specific to evaluating our rules.
+// contextualize() insert nodes specific to evaluating our rules.
 func contextualize(tree *node_t) (*node_t, error) {
-	// XXX None of the special rules are needed anymore, probably
-	// end up removing this.
-	return tree, nil
-
 	if tree == nil {
 		return tree, nil
 	}
@@ -21,13 +17,13 @@ func contextualize(tree *node_t) (*node_t, error) {
 // NODE-T (contextualizing)
 
 func (n *node_t) contextualize(args *contextualizeArgs) (*node_t, error) {
-	// Begin/continue tracking if I need a conditional inserted.
-	condparent := false
-	if args.condctx == nil && n.canHaveConditionalContext() {
-		args.condctx = &conditionalContext{needed: true}
-		condparent = true
-	} else if args.condctx != nil && n.cannotHaveConditionalContext() {
-		args.condctx.needed = false
+	// Begin/continue tracking if I need a select inserted.
+	selectparent := false
+	if args.selectctx == nil && n.canHaveSelect() {
+		args.selectctx = &selectContext{needed: true, notneeded: false}
+		selectparent = true
+	} else if args.selectctx != nil && n.doesNotNeedSelect() {
+		args.selectctx.notneeded = true
 	}
 
 	err := n.contextualizeChildren(args)
@@ -36,12 +32,15 @@ func (n *node_t) contextualize(args *contextualizeArgs) (*node_t, error) {
 	}
 
 	ans := n
-	if args.condctx != nil && condparent {
-		if args.condctx.needed {
-			ans = newNode(condition_token, "")
+	if args.selectctx != nil && selectparent {
+		if args.selectctx.needed && args.selectctx.notneeded {
+			return nil, newParseError("conflicting select conditions")
+		}
+		if args.selectctx.needed {
+			ans = newNode(select_token, "")
 			ans.addChild(n)
 		}
-		args.condctx = nil
+		args.selectctx = nil
 	}
 	return ans, nil
 }
@@ -57,33 +56,38 @@ func (n *node_t) contextualizeChildren(args *contextualizeArgs) error {
 	return nil
 }
 
-func (n *node_t) canHaveConditionalContext() bool {
-	return n.Token.inside(start_comparison, end_comparison) || n.Token.inside(start_conditional, end_conditional)
+func (n *node_t) canHaveSelect() bool {
+	if n.Parent == nil || n.Parent.Token.Symbol != path_token {
+		return false
+	}
+	return n.Token.any(select_needed_fields...)
 }
 
-func (n *node_t) cannotHaveConditionalContext() bool {
-	return n.Token.any(condition_disable_fields...)
+func (n *node_t) doesNotNeedSelect() bool {
+	return n.Token.any(select_notneeded_fields...)
 }
 
 // ------------------------------------------------------------
 // CONTEXTUALIZE-ARGS
 
 type contextualizeArgs struct {
-	condctx *conditionalContext
+	selectctx *selectContext
 }
 
 // ------------------------------------------------------------
-// CONDITIONAL-CONTEXT
+// SELECT-CONTEXT
 
-type conditionalContext struct {
-	needed bool
+type selectContext struct {
+	needed    bool
+	notneeded bool
 }
 
 // ------------------------------------------------------------
 // CONST and VAR
 
 var (
-	condition_disable_fields = []symbol{assign_token, path_token}
+	select_needed_fields    = []symbol{eql_token, neq_token}
+	select_notneeded_fields = []symbol{assign_token}
 )
 
 // ------------------------------------------------------------
