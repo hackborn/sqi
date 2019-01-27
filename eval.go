@@ -3,7 +3,7 @@ package sqi
 // ------------------------------------------------------------
 // EVAL
 
-// Eval() runs term against input, returning the result.
+// Eval runs term against input, returning the result.
 func Eval(term string, input interface{}, opt *Opt) (interface{}, error) {
 	expr, err := MakeExpr(term)
 	if err != nil {
@@ -12,7 +12,7 @@ func Eval(term string, input interface{}, opt *Opt) (interface{}, error) {
 	return expr.Eval(input, opt)
 }
 
-// EvalBool() runs term against input, returning the boolean result.
+// EvalBool runs term against input, returning the boolean result.
 // If an error occurs, the opt.OnError is returned.
 func EvalBool(term string, input interface{}, opt *Opt) bool {
 	resp, err := Eval(term, input, opt)
@@ -27,7 +27,7 @@ func EvalBool(term string, input interface{}, opt *Opt) bool {
 	return opt.onErrorBool()
 }
 
-// EvalFloat64() runs term against input, returning the float64 result.
+// EvalFloat64 runs term against input, returning the float64 result.
 // If an error occurs, the opt.OnError is returned.
 func EvalFloat64(term string, input interface{}, opt *Opt) float64 {
 	resp, err := Eval(term, input, opt)
@@ -42,7 +42,7 @@ func EvalFloat64(term string, input interface{}, opt *Opt) float64 {
 	return opt.onErrorFloat64()
 }
 
-// EvalInt() runs term against input, returning the int result.
+// EvalInt runs term against input, returning the int result.
 // If an error occurs, the opt.OnError is returned.
 func EvalInt(term string, input interface{}, opt *Opt) int {
 	resp, err := Eval(term, input, opt)
@@ -57,7 +57,7 @@ func EvalInt(term string, input interface{}, opt *Opt) int {
 	return opt.onErrorInt()
 }
 
-// EvalString() runs term against input, returning the string result.
+// EvalString runs term against input, returning the string result.
 // If an error occurs, the opt.OnError is returned.
 func EvalString(term string, input interface{}, opt *Opt) string {
 	resp, err := Eval(term, input, opt)

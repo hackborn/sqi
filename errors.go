@@ -16,44 +16,44 @@ var (
 // SQI-ERROR
 
 func newBadRequestError(msg string) error {
-	return &sqi_err_t{badRequestErrCode, msg, nil}
+	return &sqiErr{badRequestErrCode, msg, nil}
 }
 
 func newConditionError(msg string) error {
-	return &sqi_err_t{conditionErrCode, msg, nil}
+	return &sqiErr{conditionErrCode, msg, nil}
 }
 
 func newEvalError(msg string) error {
-	return &sqi_err_t{evalErrCode, msg, nil}
+	return &sqiErr{evalErrCode, msg, nil}
 }
 
 func newMalformedError(msg string) error {
-	return &sqi_err_t{malformedErrCode, msg, nil}
+	return &sqiErr{malformedErrCode, msg, nil}
 }
 
 func newMismatchError(msg string) error {
-	return &sqi_err_t{mismatchErrCode, msg, nil}
+	return &sqiErr{mismatchErrCode, msg, nil}
 }
 
 func newParseError(msg string) error {
-	return &sqi_err_t{parseErrCode, msg, nil}
+	return &sqiErr{parseErrCode, msg, nil}
 }
 
 func newUnhandledError(msg string) error {
-	return &sqi_err_t{unhandledErrCode, msg, nil}
+	return &sqiErr{unhandledErrCode, msg, nil}
 }
 
-type sqi_err_t struct {
+type sqiErr struct {
 	code int
 	msg  string
 	err  error
 }
 
-func (e *sqi_err_t) ErrorCode() int {
+func (e *sqiErr) ErrorCode() int {
 	return e.code
 }
 
-func (e *sqi_err_t) Error() string {
+func (e *sqiErr) Error() string {
 	var label string
 	switch e.code {
 	case badRequestErrCode:

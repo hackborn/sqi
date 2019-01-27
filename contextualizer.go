@@ -60,11 +60,11 @@ func (n *node_t) canHaveSelect() bool {
 	if n.Parent == nil || n.Parent.Token.Symbol != path_token {
 		return false
 	}
-	return n.Token.any(select_needed_fields...)
+	return n.Token.any(selectNeededFields...)
 }
 
 func (n *node_t) doesNotNeedSelect() bool {
-	return n.Token.any(select_notneeded_fields...)
+	return n.Token.any(selectNotNeededFields...)
 }
 
 // ------------------------------------------------------------
@@ -86,8 +86,8 @@ type selectContext struct {
 // CONST and VAR
 
 var (
-	select_needed_fields    = []symbol{eql_token, neq_token}
-	select_notneeded_fields = []symbol{assign_token}
+	selectNeededFields    = []symbol{eql_token, neq_token}
+	selectNotNeededFields = []symbol{assign_token}
 )
 
 // ------------------------------------------------------------

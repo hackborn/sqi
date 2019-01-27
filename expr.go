@@ -10,7 +10,7 @@ type Expr interface {
 	Eval(interface{}, *Opt) (interface{}, error)
 }
 
-// MakeExpr() converts an expression string into an evaluatable object.
+// MakeExpr converts an expression string into an evaluatable object.
 func MakeExpr(term string) (Expr, error) {
 	tokens, err := scan(term)
 	if err != nil {
@@ -31,17 +31,17 @@ func MakeExpr(term string) (Expr, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &expr_t{ast: ast}, nil
+	return &exprT{ast: ast}, nil
 }
 
 // --------------------------------------------------------------------------------------
-// EXPR_T
+// EXPR-T
 
-type expr_t struct {
+type exprT struct {
 	ast AstNode
 }
 
-func (e *expr_t) Eval(input interface{}, opt *Opt) (interface{}, error) {
+func (e *exprT) Eval(input interface{}, opt *Opt) (interface{}, error) {
 	if e.ast == nil {
 		return nil, newEvalError("missing AST")
 	}

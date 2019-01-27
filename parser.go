@@ -23,7 +23,7 @@ type parser interface {
 	Expression(rbp int) (*node_t, error)
 }
 
-type parser_t struct {
+type parserT struct {
 	tokens   []*node_t
 	position int
 	illegal  *node_t
@@ -31,10 +31,10 @@ type parser_t struct {
 
 func newParser(tokens []*node_t) parser {
 	illegal := &node_t{Token: token_map[illegal_token]}
-	return &parser_t{tokens: tokens, position: 0, illegal: illegal}
+	return &parserT{tokens: tokens, position: 0, illegal: illegal}
 }
 
-func (p *parser_t) Next() (*node_t, error) {
+func (p *parserT) Next() (*node_t, error) {
 	if p.position >= len(p.tokens) {
 		return nil, nil
 	}
@@ -43,14 +43,14 @@ func (p *parser_t) Next() (*node_t, error) {
 	return p.tokens[pos], nil
 }
 
-func (p *parser_t) Peek() *node_t {
+func (p *parserT) Peek() *node_t {
 	if p.position >= len(p.tokens) {
 		return p.illegal
 	}
 	return p.tokens[p.position]
 }
 
-func (p *parser_t) Expression(rbp int) (*node_t, error) {
+func (p *parserT) Expression(rbp int) (*node_t, error) {
 	n, err := p.Next()
 	if err != nil {
 		return nil, err

@@ -7,3 +7,5 @@ sudo: false
 
 install:
   - go get -t -v ./...
+script:
+  - go test

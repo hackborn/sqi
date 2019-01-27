@@ -10,8 +10,8 @@ type token_t struct {
 	Symbol       symbol
 	Text         string
 	BindingPower int
-	nud          nudFn `json:"-"`
-	led          ledFn `json:"-"`
+	nud          nudFn
+	led          ledFn
 }
 
 // any() answers true if my symbol is any of the supplied symbols.
@@ -32,9 +32,9 @@ func (t token_t) inside(start, end symbol) bool {
 // ------------------------------------------------------------
 // FUNC
 
-type nudFn func(*node_t, *parser_t) (*node_t, error)
+type nudFn func(*node_t, *parserT) (*node_t, error)
 
-type ledFn func(*node_t, *parser_t, *node_t) (*node_t, error)
+type ledFn func(*node_t, *parserT, *node_t) (*node_t, error)
 
 // ------------------------------------------------------------
 // CONST and VAR
@@ -130,15 +130,15 @@ var (
 // ------------------------------------------------------------
 // TOKEN FUNCS
 
-func emptyNud(n *node_t, p *parser_t) (*node_t, error) {
+func emptyNud(n *node_t, p *parserT) (*node_t, error) {
 	return n, nil
 }
 
-func emptyLed(n *node_t, p *parser_t, left *node_t) (*node_t, error) {
+func emptyLed(n *node_t, p *parserT, left *node_t) (*node_t, error) {
 	return n, nil
 }
 
-func pathNud(n *node_t, p *parser_t) (*node_t, error) {
+func pathNud(n *node_t, p *parserT) (*node_t, error) {
 	right, err := p.Expression(n.Token.BindingPower)
 	if err != nil {
 		return nil, err
@@ -147,7 +147,7 @@ func pathNud(n *node_t, p *parser_t) (*node_t, error) {
 	return n, nil
 }
 
-func pathLed(n *node_t, p *parser_t, left *node_t) (*node_t, error) {
+func pathLed(n *node_t, p *parserT, left *node_t) (*node_t, error) {
 	right, err := p.Expression(n.Token.BindingPower)
 	if err != nil {
 		return nil, err
@@ -157,7 +157,7 @@ func pathLed(n *node_t, p *parser_t, left *node_t) (*node_t, error) {
 	return n, nil
 }
 
-func binaryLed(n *node_t, p *parser_t, left *node_t) (*node_t, error) {
+func binaryLed(n *node_t, p *parserT, left *node_t) (*node_t, error) {
 	n.addChild(left)
 	right, err := p.Expression(n.Token.BindingPower)
 	if err != nil {
@@ -167,7 +167,7 @@ func binaryLed(n *node_t, p *parser_t, left *node_t) (*node_t, error) {
 	return n, nil
 }
 
-func enclosedNud(n *node_t, p *parser_t) (*node_t, error) {
+func enclosedNud(n *node_t, p *parserT) (*node_t, error) {
 	enclosed, err := p.Expression(n.Token.BindingPower)
 	if err != nil {
 		return nil, err
@@ -185,7 +185,7 @@ func enclosedNud(n *node_t, p *parser_t) (*node_t, error) {
 	return enclosed, nil
 }
 
-func arrayNud(n *node_t, p *parser_t) (*node_t, error) {
+func arrayNud(n *node_t, p *parserT) (*node_t, error) {
 	right, err := p.Expression(n.Token.BindingPower)
 	if err != nil {
 		return nil, err
@@ -202,7 +202,7 @@ func arrayNud(n *node_t, p *parser_t) (*node_t, error) {
 	return n, nil
 }
 
-func arrayLed(n *node_t, p *parser_t, left *node_t) (*node_t, error) {
+func arrayLed(n *node_t, p *parserT, left *node_t) (*node_t, error) {
 	right, err := p.Expression(n.Token.BindingPower)
 	if err != nil {
 		return nil, err
