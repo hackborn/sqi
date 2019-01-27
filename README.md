@@ -5,7 +5,7 @@ A simple Go query library for interface{}s.
 
 ## QUICK START ##
 
-Sqi accesses nested data via a simple topic string. It provides the general function `Eval()` for locating a result, along with conveniences such as `EvalInt()`, `EvalString()`, etc. for typed results. The general use case is to provide a path (`/`) delimited string and data to an Eval() function.
+Sqi accesses nested data via a simple topic string. It provides the general function `Eval()` for locating a result, along with conveniences such as `EvalInt()`, `EvalString()`, etc. for typed results. The main use case is to provide a path (`/`) delimited string and data to an Eval() function.
 
 Here's a complete example:
 
@@ -132,5 +132,5 @@ results in `Person{Name: c}`.
 ## CREDIT ##
 
 Much thanks to a couple people who have provided great info on top down operator precedence parsers:
-[Cristian Dima](http://www.cristiandima.com/top-down-operator-precedence-parsing-in-go)\
+[Cristian Dima](http://www.cristiandima.com/top-down-operator-precedence-parsing-in-go)<br/>
 [Eli Bendersky](https://eli.thegreenplace.net/2010/01/02/top-down-operator-precedence-parsing)
