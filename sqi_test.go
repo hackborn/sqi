@@ -205,7 +205,7 @@ func TestExpr(t *testing.T) {
 	}
 }
 
-func runTestExpr(t *testing.T, exprinput string, evalinput interface{}, opt Opt, wantResp interface{}, want_err error) {
+func runTestExpr(t *testing.T, exprinput string, evalinput interface{}, opt Opt, wantResp interface{}, wantErr error) {
 	expr, err := MakeExpr(exprinput)
 	if err != nil {
 		fmt.Println("make expr failed", err)
@@ -213,8 +213,8 @@ func runTestExpr(t *testing.T, exprinput string, evalinput interface{}, opt Opt,
 		t.Fatal()
 	}
 	haveResp, haveErr := expr.Eval(evalinput, &opt)
-	if !errorMatches(haveErr, want_err) {
-		fmt.Println("Error mismatch, have\n", haveErr, "\nwant\n", want_err)
+	if !errorMatches(haveErr, wantErr) {
+		fmt.Println("Error mismatch, have\n", haveErr, "\nwant\n", wantErr)
 		t.Fatal()
 	} else if !interfaceMatches(haveResp, wantResp) {
 		fmt.Println("Response mismatch, have\n", toJsonString(haveResp), "\nwant\n", toJsonString(wantResp))
@@ -364,7 +364,7 @@ func arrayN(left, right *nodeT) *nodeT {
 
 // binN constructs a binary token from the symbol
 func binN(sym symbol, left, right *nodeT) *nodeT {
-	b := newNode(sym, token_map[sym].Text)
+	b := newNode(sym, tokenMap[sym].Text)
 	b.addChild(left)
 	b.addChild(right)
 	return b
@@ -388,7 +388,7 @@ func orN(left, right *nodeT) *nodeT {
 }
 
 func pathN(left, right *nodeT) *nodeT {
-	b := newNode(pathToken, token_map[pathToken].Text)
+	b := newNode(pathToken, tokenMap[pathToken].Text)
 	b.addChild(left)
 	if right != nil {
 		b.addChild(right)

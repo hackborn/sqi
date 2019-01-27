@@ -9,9 +9,9 @@ import (
 // NODE-T
 
 func newNode(s symbol, text string) *nodeT {
-	token, ok := token_map[s]
+	token, ok := tokenMap[s]
 	if !ok {
-		token = token_map[illegalToken]
+		token = tokenMap[illegalToken]
 	}
 	return &nodeT{Token: token, Text: text}
 }
@@ -43,7 +43,7 @@ func (n *nodeT) reclassify() *nodeT {
 	if n.Token.Symbol != stringToken {
 		return n
 	}
-	if found, ok := keyword_map[n.Text]; ok {
+	if found, ok := keywordMap[n.Text]; ok {
 		return newNode(found.Symbol, n.Text)
 	}
 	return n

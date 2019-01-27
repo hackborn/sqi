@@ -94,7 +94,7 @@ const (
 )
 
 var (
-	token_map = map[symbol]*tokenT{
+	tokenMap = map[symbol]*tokenT{
 		illegalToken:    &tokenT{illegalToken, "", 0, emptyNud, emptyLed},
 		intToken:        &tokenT{intToken, "", 0, emptyNud, emptyLed},
 		floatToken:      &tokenT{floatToken, "", 0, emptyNud, emptyLed},
@@ -112,18 +112,18 @@ var (
 		closeArrayToken: &tokenT{closeArrayToken, "]", 85, emptyNud, emptyLed},
 		selectToken:     &tokenT{selectToken, "", 100, emptyNud, emptyLed},
 	}
-	keyword_map = map[string]*tokenT{
-		`=`:  token_map[assignToken],
-		`-`:  token_map[negToken],
-		`/`:  token_map[pathToken],
-		`==`: token_map[eqlToken],
-		`!=`: token_map[neqToken],
-		`&&`: token_map[andToken],
-		`||`: token_map[orToken],
-		`(`:  token_map[openToken],
-		`)`:  token_map[closeToken],
-		`[`:  token_map[openArrayToken],
-		`]`:  token_map[closeArrayToken],
+	keywordMap = map[string]*tokenT{
+		`=`:  tokenMap[assignToken],
+		`-`:  tokenMap[negToken],
+		`/`:  tokenMap[pathToken],
+		`==`: tokenMap[eqlToken],
+		`!=`: tokenMap[neqToken],
+		`&&`: tokenMap[andToken],
+		`||`: tokenMap[orToken],
+		`(`:  tokenMap[openToken],
+		`)`:  tokenMap[closeToken],
+		`[`:  tokenMap[openArrayToken],
+		`]`:  tokenMap[closeArrayToken],
 	}
 )
 

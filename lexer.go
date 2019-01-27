@@ -14,7 +14,7 @@ func scan(input string) ([]*nodeT, error) {
 	lexer.Whitespace = 0
 	lexer.Mode = scanner.ScanChars | scanner.ScanComments | scanner.ScanFloats | scanner.ScanIdents | scanner.ScanInts | scanner.ScanRawStrings | scanner.ScanStrings
 
-	runer := &ident_runer{}
+	runer := &runerT{}
 	lexer.IsIdentRune = runer.isIdentRune
 
 	for tok := lexer.Scan(); tok != scanner.EOF; tok = lexer.Scan() {
@@ -45,15 +45,15 @@ func scan(input string) ([]*nodeT, error) {
 }
 
 // ------------------------------------------------------------
-// IDENT-RUNER
+// RUNER-T
 
-// ident_runer supplies the rules for turning runes into idents.
-type ident_runer struct {
+// runerT supplies the rules for turning runes into nodes.
+type runerT struct {
 	accum  []rune
 	tokens []*nodeT
 }
 
-func (r *ident_runer) isIdentRune(ch rune, i int) bool {
+func (r *runerT) isIdentRune(ch rune, i int) bool {
 	// This is identical to the text scanner default. I would like the
 	// scanner to smartly identify "&&" "==" etc as separate tokens, even
 	// when there's no whitespace separating them from idents, but I can't
@@ -62,15 +62,15 @@ func (r *ident_runer) isIdentRune(ch rune, i int) bool {
 	return systemident
 }
 
-func (r *ident_runer) addString(s string) {
+func (r *runerT) addString(s string) {
 	r.addToken(newNode(stringToken, s))
 }
 
-func (r *ident_runer) addToken(t *nodeT) {
+func (r *runerT) addToken(t *nodeT) {
 	r.tokens = append(r.tokens, t.reclassify())
 }
 
-func (r *ident_runer) accumulate(ch rune) {
+func (r *runerT) accumulate(ch rune) {
 	// Single-character tokens are directly added
 	switch ch {
 	case '/':
@@ -81,7 +81,7 @@ func (r *ident_runer) accumulate(ch rune) {
 	}
 }
 
-func (r *ident_runer) flush() {
+func (r *runerT) flush() {
 	if len(r.accum) < 1 {
 		return
 	}
@@ -101,9 +101,9 @@ func (r *ident_runer) flush() {
 	r.accum = nil
 }
 
-func (r *ident_runer) extractToken(s string) (*tokenT, string) {
+func (r *runerT) extractToken(s string) (*tokenT, string) {
 	var tok *tokenT
-	for k, v := range keyword_map {
+	for k, v := range keywordMap {
 		if strings.HasPrefix(s, k) && (tok == nil || len(k) > len(tok.Text)) {
 			tok = v
 		}

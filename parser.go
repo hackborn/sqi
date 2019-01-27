@@ -30,7 +30,7 @@ type parserT struct {
 }
 
 func newParser(tokens []*nodeT) parser {
-	illegal := &nodeT{Token: token_map[illegalToken]}
+	illegal := &nodeT{Token: tokenMap[illegalToken]}
 	return &parserT{tokens: tokens, position: 0, illegal: illegal}
 }
 
