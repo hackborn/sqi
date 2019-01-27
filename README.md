@@ -1,5 +1,9 @@
 # sqi
-Utility for querying and modifiying interface{}s.
+A simple Go query library for interface{}s.
+
+**sqi** is a simple way to ask questions about your data. It can be used to find values and extract results from complex user data, as well as data that has been hydrated via an encoding such as JSON.
+
+## EXAMPLE ##
 
 
 ## CREDIT ##

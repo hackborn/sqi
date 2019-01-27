@@ -189,6 +189,7 @@ func TestExpr(t *testing.T) {
 		{`/Children[1]/Name`, input_6, Opt{}, "b", nil},
 		{`[1]`, [2]string{"a", "b"}, Opt{}, "b", nil},
 		{`([1]) == "b"`, [2]string{"a", "b"}, Opt{}, true, nil},
+		{`/Children[0]`, input_3, Opt{}, nil, nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
@@ -212,7 +213,8 @@ func runTestExpr(t *testing.T, exprinput string, evalinput interface{}, opt Opt,
 		t.Fatal()
 	} else if !interfaceMatches(have_resp, want_resp) {
 		fmt.Println("Response mismatch, have\n", toJsonString(have_resp), "\nwant\n", toJsonString(want_resp))
-		printExprConstruction(exprinput)
+		fmt.Println("Response mismatch, have\n", have_resp, "\nwant\n", want_resp)
+		//		printExprConstruction(exprinput)
 		t.Fatal()
 	}
 }

@@ -28,6 +28,7 @@ type arrayNode struct {
 
 func (n *arrayNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
 	// fmt.Println("Eval arrayNode", n.Lhs, n.Index)
+
 	lhs := _i
 	if n.Lhs != nil {
 		var err error
@@ -37,17 +38,23 @@ func (n *arrayNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
 		}
 	}
 
+	// We need to decide on how to handle invalid node input:
+	// I'm currently inclined to just returned no result, since this
+	// is a search.
+	if lhs == nil {
+		return nil, nil
+	}
+
 	// We need to distinguish between slices, arrays, and single items
 	rt := reflect.TypeOf(lhs)
 	switch rt.Kind() {
-	case reflect.Slice:
+	case reflect.Array, reflect.Slice:
 		src := reflect.Indirect(reflect.ValueOf(lhs))
-		if n.Index >= 0 && n.Index < src.Len() {
-			item := src.Index(n.Index)
-			return item.Interface(), nil
+		// This matches what I expect of a single-index array access
+		// (that it returns a single requested value)
+		if src.Len() < 1 {
+			return nil, nil
 		}
-	case reflect.Array:
-		src := reflect.Indirect(reflect.ValueOf(lhs))
 		if n.Index >= 0 && n.Index < src.Len() {
 			item := src.Index(n.Index)
 			return item.Interface(), nil
