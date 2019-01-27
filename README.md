@@ -1,6 +1,7 @@
 # sqi
 
 [![Build Status](https://travis-ci.org/hackborn/sqi.svg?branch=master)](https://travis-ci.org/hackborn/sqi)
+[![Go Report Card](https://goreportcard.com/badge/github.com/hackborn/sqi)](https://goreportcard.com/report/github.com/hackborn/sqi)
 
 A simple Go query library for interface{}s.
 
