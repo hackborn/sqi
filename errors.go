@@ -1,7 +1,5 @@
 package sqi
 
-import ()
-
 var (
 	badRequestErr = newBadRequestError("")
 	conditionErr  = newConditionError("")
