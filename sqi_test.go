@@ -17,7 +17,7 @@ import (
 func TestLexer(t *testing.T) {
 	cases := []struct {
 		Input    string
-		WantResp []*node_t
+		WantResp []*nodeT
 		WantErr  error
 	}{
 		{`a`, tokens(`a`), nil},
@@ -37,12 +37,12 @@ func TestLexer(t *testing.T) {
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			have_resp, have_err := scan(tc.Input)
-			if !errorMatches(have_err, tc.WantErr) {
-				fmt.Println("Error mismatch, have\n", have_err, "\nwant\n", tc.WantErr)
+			haveResp, haveErr := scan(tc.Input)
+			if !errorMatches(haveErr, tc.WantErr) {
+				fmt.Println("Error mismatch, have\n", haveErr, "\nwant\n", tc.WantErr)
 				t.Fatal()
-			} else if !tokensMatch(have_resp, tc.WantResp) {
-				fmt.Println("Token mismatch, have\n", toJsonString(have_resp), "\nwant\n", toJsonString(tc.WantResp))
+			} else if !tokensMatch(haveResp, tc.WantResp) {
+				fmt.Println("Token mismatch, have\n", toJsonString(haveResp), "\nwant\n", toJsonString(tc.WantResp))
 				t.Fatal()
 			}
 		})
@@ -53,25 +53,25 @@ func TestLexer(t *testing.T) {
 // TEST-PARSER
 
 func TestParser(t *testing.T) {
-	want0 := str_n(`a`)
-	want1 := path_n(path_n(str_n(`a`), nil), str_n(`b`))
-	want2 := path_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), str_n(`c`))
-	want3 := eql_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), str_n(`c`))
-	want4 := str_n(`a`)
-	want6 := eql_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), str_n(`c`))
-	want7 := eql_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), int_n(10))
-	want8 := eql_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), float_n(5.5))
-	want9 := or_n(eql_n(str_n(`a`), str_n(`b`)), eql_n(str_n(`c`), str_n(`d`)))
-	want10 := or_n(eql_n(path_n(str_n(`a`), nil), path_n(str_n(`b`), nil)), eql_n(path_n(str_n(`c`), nil), path_n(str_n(`d`), nil)))
-	want11 := array_n(str_n(`a`), int_n(0))
-	want12 := array_n(path_n(str_n(`a`), nil), int_n(0))
-	want13 := path_n(array_n(path_n(str_n(`a`), nil), int_n(0)), str_n(`b`))
-	want14 := array_n(path_n(path_n(str_n(`a`), nil), str_n(`b`)), int_n(0))
-	want15 := path_n(path_n(str_n(`a`), nil), eql_n(path_n(str_n(`b`), nil), str_n(`c`)))
+	want0 := strN(`a`)
+	want1 := pathN(pathN(strN(`a`), nil), strN(`b`))
+	want2 := pathN(pathN(pathN(strN(`a`), nil), strN(`b`)), strN(`c`))
+	want3 := eqlN(pathN(pathN(strN(`a`), nil), strN(`b`)), strN(`c`))
+	want4 := strN(`a`)
+	want6 := eqlN(pathN(pathN(strN(`a`), nil), strN(`b`)), strN(`c`))
+	want7 := eqlN(pathN(pathN(strN(`a`), nil), strN(`b`)), intN(10))
+	want8 := eqlN(pathN(pathN(strN(`a`), nil), strN(`b`)), floatN(5.5))
+	want9 := orN(eqlN(strN(`a`), strN(`b`)), eqlN(strN(`c`), strN(`d`)))
+	want10 := orN(eqlN(pathN(strN(`a`), nil), pathN(strN(`b`), nil)), eqlN(pathN(strN(`c`), nil), pathN(strN(`d`), nil)))
+	want11 := arrayN(strN(`a`), intN(0))
+	want12 := arrayN(pathN(strN(`a`), nil), intN(0))
+	want13 := pathN(arrayN(pathN(strN(`a`), nil), intN(0)), strN(`b`))
+	want14 := arrayN(pathN(pathN(strN(`a`), nil), strN(`b`)), intN(0))
+	want15 := pathN(pathN(strN(`a`), nil), eqlN(pathN(strN(`b`), nil), strN(`c`)))
 
 	cases := []struct {
-		Input    []*node_t
-		WantResp *node_t
+		Input    []*nodeT
+		WantResp *nodeT
 		WantErr  error
 	}{
 		{tokens(`a`), want0, nil},
@@ -96,12 +96,12 @@ func TestParser(t *testing.T) {
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			have_resp, have_err := parse(tc.Input)
-			if !errorMatches(have_err, tc.WantErr) {
-				fmt.Println("Error mismatch, have\n", have_err, "\nwant\n", tc.WantErr)
+			haveResp, haveErr := parse(tc.Input)
+			if !errorMatches(haveErr, tc.WantErr) {
+				fmt.Println("Error mismatch, have\n", haveErr, "\nwant\n", tc.WantErr)
 				t.Fatal()
-			} else if !interfaceMatches(have_resp, tc.WantResp) {
-				fmt.Println("Parser mismatch, have\n", toJsonString(have_resp), "\nwant\n", toJsonString(tc.WantResp))
+			} else if !interfaceMatches(haveResp, tc.WantResp) {
+				fmt.Println("Parser mismatch, have\n", toJsonString(haveResp), "\nwant\n", toJsonString(tc.WantResp))
 				t.Fatal()
 			}
 		})
@@ -112,12 +112,12 @@ func TestParser(t *testing.T) {
 // TEST-CONTEXTUALIZER
 
 func TestContextualizer(t *testing.T) {
-	input0 := path_n(path_n(str_n(`a`), nil), eql_n(path_n(str_n(`b`), nil), str_n(`c`)))
-	want0 := path_n(path_n(str_n(`a`), nil), sel_n(eql_n(path_n(str_n(`b`), nil), str_n(`c`))))
+	input0 := pathN(pathN(strN(`a`), nil), eqlN(pathN(strN(`b`), nil), strN(`c`)))
+	want0 := pathN(pathN(strN(`a`), nil), selN(eqlN(pathN(strN(`b`), nil), strN(`c`))))
 
 	cases := []struct {
-		Input    *node_t
-		WantResp *node_t
+		Input    *nodeT
+		WantResp *nodeT
 		WantErr  error
 	}{
 		// A select
@@ -125,12 +125,12 @@ func TestContextualizer(t *testing.T) {
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			have_resp, have_err := contextualize(tc.Input)
-			if !errorMatches(have_err, tc.WantErr) {
-				fmt.Println("Error mismatch, have\n", have_err, "\nwant\n", tc.WantErr)
+			haveResp, haveErr := contextualize(tc.Input)
+			if !errorMatches(haveErr, tc.WantErr) {
+				fmt.Println("Error mismatch, have\n", haveErr, "\nwant\n", tc.WantErr)
 				t.Fatal()
-			} else if !interfaceMatches(have_resp, tc.WantResp) {
-				fmt.Println("Token mismatch, have\n", toJsonString(have_resp), "\nwant\n", toJsonString(tc.WantResp))
+			} else if !interfaceMatches(haveResp, tc.WantResp) {
+				fmt.Println("Token mismatch, have\n", toJsonString(haveResp), "\nwant\n", toJsonString(tc.WantResp))
 				t.Fatal()
 			}
 		})
@@ -163,7 +163,7 @@ func TestExpr(t *testing.T) {
 		{`(/Mom/Name) == Ana`, input1, Opt{}, true, nil},
 		// Make sure quotes are removed
 		{`/Name == "Ana Belle"`, input2, Opt{}, true, nil},
-		// Strictness -- by default strict is off, and incompatibile comparisons result in false.
+		// Strictness -- by default strict is off, and incompatible comparisons result in false.
 		{`/Name == 22`, input3, Opt{Strict: false}, false, nil},
 		// Strictness -- if strict is on, report error with incompatible comparisons.
 		{`/Name == 22`, input3, Opt{Strict: true}, false, mismatchErr},
@@ -205,20 +205,20 @@ func TestExpr(t *testing.T) {
 	}
 }
 
-func runTestExpr(t *testing.T, exprinput string, evalinput interface{}, opt Opt, want_resp interface{}, want_err error) {
+func runTestExpr(t *testing.T, exprinput string, evalinput interface{}, opt Opt, wantResp interface{}, want_err error) {
 	expr, err := MakeExpr(exprinput)
 	if err != nil {
 		fmt.Println("make expr failed", err)
 		printExprConstruction(exprinput)
 		t.Fatal()
 	}
-	have_resp, have_err := expr.Eval(evalinput, &opt)
-	if !errorMatches(have_err, want_err) {
-		fmt.Println("Error mismatch, have\n", have_err, "\nwant\n", want_err)
+	haveResp, haveErr := expr.Eval(evalinput, &opt)
+	if !errorMatches(haveErr, want_err) {
+		fmt.Println("Error mismatch, have\n", haveErr, "\nwant\n", want_err)
 		t.Fatal()
-	} else if !interfaceMatches(have_resp, want_resp) {
-		fmt.Println("Response mismatch, have\n", toJsonString(have_resp), "\nwant\n", toJsonString(want_resp))
-		fmt.Println("Response mismatch, have\n", have_resp, "\nwant\n", want_resp)
+	} else if !interfaceMatches(haveResp, wantResp) {
+		fmt.Println("Response mismatch, have\n", toJsonString(haveResp), "\nwant\n", toJsonString(wantResp))
+		fmt.Println("Response mismatch, have\n", haveResp, "\nwant\n", wantResp)
 		//		printExprConstruction(exprinput)
 		t.Fatal()
 	}
@@ -246,9 +246,9 @@ func TestEvalFloat64(t *testing.T) {
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			have_resp := EvalFloat64(tc.Term, tc.Input, tc.Opt)
-			if have_resp != tc.WantResp {
-				fmt.Println("Response mismatch, have\n", have_resp, "\nwant\n", tc.WantResp)
+			haveResp := EvalFloat64(tc.Term, tc.Input, tc.Opt)
+			if haveResp != tc.WantResp {
+				fmt.Println("Response mismatch, have\n", haveResp, "\nwant\n", tc.WantResp)
 				printExprConstruction(tc.Term)
 				t.Fatal()
 			}
@@ -274,9 +274,9 @@ func TestEvalInt(t *testing.T) {
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			have_resp := EvalInt(tc.Term, tc.Input, tc.Opt)
-			if have_resp != tc.WantResp {
-				fmt.Println("Response mismatch, have\n", strconv.Itoa(have_resp), "\nwant\n", strconv.Itoa(tc.WantResp))
+			haveResp := EvalInt(tc.Term, tc.Input, tc.Opt)
+			if haveResp != tc.WantResp {
+				fmt.Println("Response mismatch, have\n", strconv.Itoa(haveResp), "\nwant\n", strconv.Itoa(tc.WantResp))
 				printExprConstruction(tc.Term)
 				t.Fatal()
 			}
@@ -302,9 +302,9 @@ func TestEvalString(t *testing.T) {
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			have_resp := EvalString(tc.Term, tc.Input, tc.Opt)
-			if have_resp != tc.WantResp {
-				fmt.Println("Response mismatch, have\n", have_resp, "\nwant\n", tc.WantResp)
+			haveResp := EvalString(tc.Term, tc.Input, tc.Opt)
+			if haveResp != tc.WantResp {
+				fmt.Println("Response mismatch, have\n", haveResp, "\nwant\n", tc.WantResp)
 				printExprConstruction(tc.Term)
 				t.Fatal()
 			}
@@ -339,56 +339,56 @@ func (p Person) MarshalJSON() ([]byte, error) {
 // BUILD (tokens)
 
 // tokens() constructs a flat list of tokens
-func tokens(all ...interface{}) []*node_t {
-	var tokens []*node_t
+func tokens(all ...interface{}) []*nodeT {
+	var tokens []*nodeT
 	for _, t := range all {
 		switch v := t.(type) {
 		case float32:
 			val := strconv.FormatFloat(float64(v), 'f', 8, 64)
-			tokens = append(tokens, newNode(float_token, val))
+			tokens = append(tokens, newNode(floatToken, val))
 		case float64:
 			val := strconv.FormatFloat(v, 'f', 8, 64)
-			tokens = append(tokens, newNode(float_token, val))
+			tokens = append(tokens, newNode(floatToken, val))
 		case int:
-			tokens = append(tokens, newNode(int_token, strconv.Itoa(v)))
+			tokens = append(tokens, newNode(intToken, strconv.Itoa(v)))
 		case string:
-			tokens = append(tokens, newNode(string_token, v).reclassify())
+			tokens = append(tokens, newNode(stringToken, v).reclassify())
 		}
 	}
 	return tokens
 }
 
-func array_n(left, right *node_t) *node_t {
-	return bin_n(open_array, left, right)
+func arrayN(left, right *nodeT) *nodeT {
+	return binN(openArrayToken, left, right)
 }
 
-// bin_n() constructs a binary token from the symbol
-func bin_n(sym symbol, left, right *node_t) *node_t {
+// binN constructs a binary token from the symbol
+func binN(sym symbol, left, right *nodeT) *nodeT {
 	b := newNode(sym, token_map[sym].Text)
 	b.addChild(left)
 	b.addChild(right)
 	return b
 }
 
-func eql_n(left, right *node_t) *node_t {
-	return bin_n(eql_token, left, right)
+func eqlN(left, right *nodeT) *nodeT {
+	return binN(eqlToken, left, right)
 }
 
-func float_n(v float64) *node_t {
+func floatN(v float64) *nodeT {
 	text := strconv.FormatFloat(v, 'f', 8, 64)
-	return newNode(float_token, text)
+	return newNode(floatToken, text)
 }
 
-func int_n(v int) *node_t {
-	return newNode(int_token, strconv.Itoa(v))
+func intN(v int) *nodeT {
+	return newNode(intToken, strconv.Itoa(v))
 }
 
-func or_n(left, right *node_t) *node_t {
-	return bin_n(or_token, left, right)
+func orN(left, right *nodeT) *nodeT {
+	return binN(orToken, left, right)
 }
 
-func path_n(left, right *node_t) *node_t {
-	b := newNode(path_token, token_map[path_token].Text)
+func pathN(left, right *nodeT) *nodeT {
+	b := newNode(pathToken, token_map[pathToken].Text)
 	b.addChild(left)
 	if right != nil {
 		b.addChild(right)
@@ -396,16 +396,16 @@ func path_n(left, right *node_t) *node_t {
 	return b
 }
 
-func sel_n(child *node_t) *node_t {
-	return mk_unary(select_token, child)
+func selN(child *nodeT) *nodeT {
+	return mkUnary(selectToken, child)
 }
 
-func str_n(text string) *node_t {
-	return newNode(string_token, text)
+func strN(text string) *nodeT {
+	return newNode(stringToken, text)
 }
 
-// mk_unary() constructs a unary token from the symbol
-func mk_unary(sym symbol, child *node_t) *node_t {
+// mkUnary constructs a unary token from the symbol
+func mkUnary(sym symbol, child *nodeT) *nodeT {
 	n := newNode(sym, "")
 	n.addChild(child)
 	return n
@@ -452,7 +452,7 @@ func interfaceMatches(a, b interface{}) bool {
 	return ja == jb
 }
 
-func tokensMatch(a, b []*node_t) bool {
+func tokensMatch(a, b []*nodeT) bool {
 	if len(a) != len(b) {
 		return false
 	} else if len(a) < 1 {
@@ -467,7 +467,7 @@ func tokensMatch(a, b []*node_t) bool {
 }
 
 // tokenMatches() compares only the lexer portion of the token, not the parsing.
-func tokenMatches(a, b *node_t) bool {
+func tokenMatches(a, b *nodeT) bool {
 	if a == nil && b == nil {
 		return true
 	} else if a == nil || b == nil {
@@ -479,11 +479,11 @@ func tokenMatches(a, b *node_t) bool {
 // ------------------------------------------------------------
 // COMPARE BOILERPLATE
 
-func (n node_t) MarshalJSON() ([]byte, error) {
+func (n nodeT) MarshalJSON() ([]byte, error) {
 	return orderedMarshalJSON(n)
 }
 
-func (t token_t) MarshalJSON() ([]byte, error) {
+func (t tokenT) MarshalJSON() ([]byte, error) {
 	return orderedMarshalJSON(t)
 }
 
@@ -491,12 +491,12 @@ func (t token_t) MarshalJSON() ([]byte, error) {
 func orderedMarshalJSON(src interface{}) ([]byte, error) {
 	var buf bytes.Buffer
 	v := reflect.Indirect(reflect.ValueOf(src))
-	var pairs []pair_t
+	var pairs []pairT
 	for i := 0; i < v.NumField(); i++ {
 		val := v.Field(i)
 		field := v.Type().Field(i)
 		if wantsJsonField(val, field) {
-			pairs = append(pairs, pair_t{field.Name, val.Interface()})
+			pairs = append(pairs, pairT{field.Name, val.Interface()})
 		}
 	}
 
@@ -542,12 +542,12 @@ func wantsJsonField(val reflect.Value, field reflect.StructField) bool {
 	return true
 }
 
-type pair_t struct {
+type pairT struct {
 	Key   string
 	Value interface{}
 }
 
-type ByPair []pair_t
+type ByPair []pairT
 
 func (a ByPair) Len() int           { return len(a) }
 func (a ByPair) Less(i, j int) bool { return strings.Compare(a[i].Key, a[j].Key) < 0 }

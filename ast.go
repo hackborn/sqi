@@ -84,17 +84,17 @@ func (n *binaryNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
 		return nil, newMalformedError("binary node")
 	}
 	switch n.Op {
-	case eql_token:
+	case eqlToken:
 		return n.evalEql(_i, opt)
-	case neq_token:
+	case neqToken:
 		resp, err := n.evalEql(_i, opt)
 		if err != nil {
 			return false, err
 		}
 		return !resp, err
-	case and_token:
+	case andToken:
 		return n.evalAnd(_i, opt)
-	case or_token:
+	case orToken:
 		return n.evalOr(_i, opt)
 	default:
 		return nil, newUnhandledError("binary " + strconv.Itoa(int(n.Op)))

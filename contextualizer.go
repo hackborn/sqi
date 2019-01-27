@@ -5,7 +5,7 @@ import (
 )
 
 // contextualize() insert nodes specific to evaluating our rules.
-func contextualize(tree *node_t) (*node_t, error) {
+func contextualize(tree *nodeT) (*nodeT, error) {
 	if tree == nil {
 		return tree, nil
 	}
@@ -16,7 +16,7 @@ func contextualize(tree *node_t) (*node_t, error) {
 // ------------------------------------------------------------
 // NODE-T (contextualizing)
 
-func (n *node_t) contextualize(args *contextualizeArgs) (*node_t, error) {
+func (n *nodeT) contextualize(args *contextualizeArgs) (*nodeT, error) {
 	// Begin/continue tracking if I need a select inserted.
 	selectparent := false
 	if args.selectctx == nil && n.canHaveSelect() {
@@ -37,7 +37,7 @@ func (n *node_t) contextualize(args *contextualizeArgs) (*node_t, error) {
 			return nil, newParseError("conflicting select conditions")
 		}
 		if args.selectctx.needed {
-			ans = newNode(select_token, "")
+			ans = newNode(selectToken, "")
 			ans.addChild(n)
 		}
 		args.selectctx = nil
@@ -45,7 +45,7 @@ func (n *node_t) contextualize(args *contextualizeArgs) (*node_t, error) {
 	return ans, nil
 }
 
-func (n *node_t) contextualizeChildren(args *contextualizeArgs) error {
+func (n *nodeT) contextualizeChildren(args *contextualizeArgs) error {
 	for i, c := range n.Children {
 		c2, err := c.contextualize(args)
 		if err != nil {
@@ -56,14 +56,14 @@ func (n *node_t) contextualizeChildren(args *contextualizeArgs) error {
 	return nil
 }
 
-func (n *node_t) canHaveSelect() bool {
-	if n.Parent == nil || n.Parent.Token.Symbol != path_token {
+func (n *nodeT) canHaveSelect() bool {
+	if n.Parent == nil || n.Parent.Token.Symbol != pathToken {
 		return false
 	}
 	return n.Token.any(selectNeededFields...)
 }
 
-func (n *node_t) doesNotNeedSelect() bool {
+func (n *nodeT) doesNotNeedSelect() bool {
 	return n.Token.any(selectNotNeededFields...)
 }
 
@@ -86,8 +86,8 @@ type selectContext struct {
 // CONST and VAR
 
 var (
-	selectNeededFields    = []symbol{eql_token, neq_token}
-	selectNotNeededFields = []symbol{assign_token}
+	selectNeededFields    = []symbol{eqlToken, neqToken}
+	selectNotNeededFields = []symbol{assignToken}
 )
 
 // ------------------------------------------------------------

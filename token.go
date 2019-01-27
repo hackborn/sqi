@@ -5,8 +5,8 @@ import ()
 // ------------------------------------------------------------
 // TOKEN-T
 
-// token_t stores a single token type, and associated behaviour.
-type token_t struct {
+// tokenT stores a single token type, and associated behaviour.
+type tokenT struct {
 	Symbol       symbol
 	Text         string
 	BindingPower int
@@ -15,7 +15,7 @@ type token_t struct {
 }
 
 // any() answers true if my symbol is any of the supplied symbols.
-func (t token_t) any(symbols ...symbol) bool {
+func (t tokenT) any(symbols ...symbol) bool {
 	for _, s := range symbols {
 		if t.Symbol == s {
 			return true
@@ -25,16 +25,16 @@ func (t token_t) any(symbols ...symbol) bool {
 }
 
 // inside() answers true if my symbol is after start and before end.
-func (t token_t) inside(start, end symbol) bool {
+func (t tokenT) inside(start, end symbol) bool {
 	return t.Symbol > start && t.Symbol < end
 }
 
 // ------------------------------------------------------------
 // FUNC
 
-type nudFn func(*node_t, *parserT) (*node_t, error)
+type nudFn func(*nodeT, *parserT) (*nodeT, error)
 
-type ledFn func(*node_t, *parserT, *node_t) (*node_t, error)
+type ledFn func(*nodeT, *parserT, *nodeT) (*nodeT, error)
 
 // ------------------------------------------------------------
 // CONST and VAR
@@ -43,102 +43,102 @@ type symbol int
 
 const (
 	// Special tokens
-	illegal_token symbol = iota
-	eof_token
+	illegalToken symbol = iota
+	eofToken
 
 	// Raw values
-	int_token    // 12345
-	float_token  // 123.45
-	string_token // "abc"
+	intToken    // 12345
+	floatToken  // 123.45
+	stringToken // "abc"
 
 	// Assignment
-	assign_token // =
+	assignToken // =
 
 	// Negation
-	neg_token // -
+	negToken // -
 
 	// Building
-	path_token // /
+	pathToken // /
 
 	// Comparison
-	start_comparison
+	startComparison
 
-	eql_token // ==
-	neq_token // !=
+	eqlToken // ==
+	neqToken // !=
 
-	end_comparison
+	endComparison
 
 	// -- CONDITIONALS. All conditional operators must be after this
-	start_conditional
+	startConditional
 
-	and_token // &&
-	or_token  // ||
+	andToken // &&
+	orToken  // ||
 
 	// -- END CONDITIONALS.
-	end_conditional
+	endConditional
 
 	// -- UNARIES. All unary operators must be after this
-	start_unary
+	startUnary
 
 	// Enclosures
-	open_token  // (
-	open_array  // [
-	close_token // ) // All closes must be after the opens
-	close_array // ]
+	openToken       // (
+	openArrayToken  // [
+	closeToken      // ) // All closes must be after the opens
+	closeArrayToken // ]
 
 	// True/false condition
-	select_token
+	selectToken
 
 	// -- END UNARIES.
-	end_unary
+	endUnary
 )
 
 var (
-	token_map = map[symbol]*token_t{
-		illegal_token: &token_t{illegal_token, "", 0, emptyNud, emptyLed},
-		int_token:     &token_t{int_token, "", 0, emptyNud, emptyLed},
-		float_token:   &token_t{float_token, "", 0, emptyNud, emptyLed},
-		string_token:  &token_t{string_token, "", 0, emptyNud, emptyLed},
-		assign_token:  &token_t{assign_token, "=", 80, emptyNud, binaryLed},
-		neg_token:     &token_t{neg_token, "", 0, emptyNud, emptyLed},
-		path_token:    &token_t{path_token, "/", 90, pathNud, binaryLed},
-		eql_token:     &token_t{eql_token, "==", 70, emptyNud, binaryLed},
-		neq_token:     &token_t{neq_token, "!=", 70, emptyNud, binaryLed},
-		and_token:     &token_t{and_token, "&&", 60, emptyNud, binaryLed},
-		or_token:      &token_t{or_token, "||", 60, emptyNud, binaryLed},
-		open_token:    &token_t{open_token, "(", 0, enclosedNud, emptyLed},
-		close_token:   &token_t{close_token, ")", 0, emptyNud, emptyLed},
-		open_array:    &token_t{open_array, "[", 85, arrayNud, arrayLed},
-		close_array:   &token_t{close_array, "]", 85, emptyNud, emptyLed},
-		select_token:  &token_t{select_token, "", 100, emptyNud, emptyLed},
+	token_map = map[symbol]*tokenT{
+		illegalToken:    &tokenT{illegalToken, "", 0, emptyNud, emptyLed},
+		intToken:        &tokenT{intToken, "", 0, emptyNud, emptyLed},
+		floatToken:      &tokenT{floatToken, "", 0, emptyNud, emptyLed},
+		stringToken:     &tokenT{stringToken, "", 0, emptyNud, emptyLed},
+		assignToken:     &tokenT{assignToken, "=", 80, emptyNud, binaryLed},
+		negToken:        &tokenT{negToken, "", 0, emptyNud, emptyLed},
+		pathToken:       &tokenT{pathToken, "/", 90, pathNud, binaryLed},
+		eqlToken:        &tokenT{eqlToken, "==", 70, emptyNud, binaryLed},
+		neqToken:        &tokenT{neqToken, "!=", 70, emptyNud, binaryLed},
+		andToken:        &tokenT{andToken, "&&", 60, emptyNud, binaryLed},
+		orToken:         &tokenT{orToken, "||", 60, emptyNud, binaryLed},
+		openToken:       &tokenT{openToken, "(", 0, enclosedNud, emptyLed},
+		closeToken:      &tokenT{closeToken, ")", 0, emptyNud, emptyLed},
+		openArrayToken:  &tokenT{openArrayToken, "[", 85, arrayNud, arrayLed},
+		closeArrayToken: &tokenT{closeArrayToken, "]", 85, emptyNud, emptyLed},
+		selectToken:     &tokenT{selectToken, "", 100, emptyNud, emptyLed},
 	}
-	keyword_map = map[string]*token_t{
-		`=`:  token_map[assign_token],
-		`-`:  token_map[neg_token],
-		`/`:  token_map[path_token],
-		`==`: token_map[eql_token],
-		`!=`: token_map[neq_token],
-		`&&`: token_map[and_token],
-		`||`: token_map[or_token],
-		`(`:  token_map[open_token],
-		`)`:  token_map[close_token],
-		`[`:  token_map[open_array],
-		`]`:  token_map[close_array],
+	keyword_map = map[string]*tokenT{
+		`=`:  token_map[assignToken],
+		`-`:  token_map[negToken],
+		`/`:  token_map[pathToken],
+		`==`: token_map[eqlToken],
+		`!=`: token_map[neqToken],
+		`&&`: token_map[andToken],
+		`||`: token_map[orToken],
+		`(`:  token_map[openToken],
+		`)`:  token_map[closeToken],
+		`[`:  token_map[openArrayToken],
+		`]`:  token_map[closeArrayToken],
 	}
 )
 
 // ------------------------------------------------------------
 // TOKEN FUNCS
 
-func emptyNud(n *node_t, p *parserT) (*node_t, error) {
+func emptyNud(n *nodeT, p *parserT) (*nodeT, error) {
 	return n, nil
 }
 
-func emptyLed(n *node_t, p *parserT, left *node_t) (*node_t, error) {
+func emptyLed(n *nodeT, p *parserT, left *nodeT) (*nodeT, error) {
 	return n, nil
 }
 
-func pathNud(n *node_t, p *parserT) (*node_t, error) {
+func pathNud(n *nodeT, p *parserT) (*nodeT, error) {
 	right, err := p.Expression(n.Token.BindingPower)
 	if err != nil {
 		return nil, err
@@ -147,7 +147,7 @@ func pathNud(n *node_t, p *parserT) (*node_t, error) {
 	return n, nil
 }
 
-func pathLed(n *node_t, p *parserT, left *node_t) (*node_t, error) {
+func pathLed(n *nodeT, p *parserT, left *nodeT) (*nodeT, error) {
 	right, err := p.Expression(n.Token.BindingPower)
 	if err != nil {
 		return nil, err
@@ -157,7 +157,7 @@ func pathLed(n *node_t, p *parserT, left *node_t) (*node_t, error) {
 	return n, nil
 }
 
-func binaryLed(n *node_t, p *parserT, left *node_t) (*node_t, error) {
+func binaryLed(n *nodeT, p *parserT, left *nodeT) (*nodeT, error) {
 	n.addChild(left)
 	right, err := p.Expression(n.Token.BindingPower)
 	if err != nil {
@@ -167,7 +167,7 @@ func binaryLed(n *node_t, p *parserT, left *node_t) (*node_t, error) {
 	return n, nil
 }
 
-func enclosedNud(n *node_t, p *parserT) (*node_t, error) {
+func enclosedNud(n *nodeT, p *parserT) (*nodeT, error) {
 	enclosed, err := p.Expression(n.Token.BindingPower)
 	if err != nil {
 		return nil, err
@@ -179,13 +179,13 @@ func enclosedNud(n *node_t, p *parserT) (*node_t, error) {
 	if next == nil {
 		return nil, newParseError("missing next for " + n.Text)
 	}
-	if next.Token.Symbol != close_token {
+	if next.Token.Symbol != closeToken {
 		return nil, newParseError("missing close for " + n.Text)
 	}
 	return enclosed, nil
 }
 
-func arrayNud(n *node_t, p *parserT) (*node_t, error) {
+func arrayNud(n *nodeT, p *parserT) (*nodeT, error) {
 	right, err := p.Expression(n.Token.BindingPower)
 	if err != nil {
 		return nil, err
@@ -194,7 +194,7 @@ func arrayNud(n *node_t, p *parserT) (*node_t, error) {
 	if err != nil {
 		return nil, err
 	}
-	if next.Token.Symbol != close_array {
+	if next.Token.Symbol != closeArrayToken {
 		return nil, newParseError("missing close for " + n.Text)
 	}
 
@@ -202,7 +202,7 @@ func arrayNud(n *node_t, p *parserT) (*node_t, error) {
 	return n, nil
 }
 
-func arrayLed(n *node_t, p *parserT, left *node_t) (*node_t, error) {
+func arrayLed(n *nodeT, p *parserT, left *nodeT) (*nodeT, error) {
 	right, err := p.Expression(n.Token.BindingPower)
 	if err != nil {
 		return nil, err
@@ -211,7 +211,7 @@ func arrayLed(n *node_t, p *parserT, left *node_t) (*node_t, error) {
 	if err != nil {
 		return nil, err
 	}
-	if next.Token.Symbol != close_array {
+	if next.Token.Symbol != closeArrayToken {
 		return nil, newParseError("missing close for " + n.Text)
 	}
 

@@ -6,8 +6,8 @@ import (
 	"unicode"
 )
 
-// scan() converts a string into a flat list of tokens.
-func scan(input string) ([]*node_t, error) {
+// scan converts a string into a flat list of tokens.
+func scan(input string) ([]*nodeT, error) {
 	var lexer scanner.Scanner
 	lexer.Init(strings.NewReader(input))
 	// lexer.Whitespace = 1<<'\r' | 1<<'\t'
@@ -22,10 +22,10 @@ func scan(input string) ([]*node_t, error) {
 		switch tok {
 		case scanner.Float:
 			runer.flush()
-			runer.addToken(newNode(float_token, lexer.TokenText()))
+			runer.addToken(newNode(floatToken, lexer.TokenText()))
 		case scanner.Int:
 			runer.flush()
-			runer.addToken(newNode(int_token, lexer.TokenText()))
+			runer.addToken(newNode(intToken, lexer.TokenText()))
 		case scanner.Ident:
 			runer.flush()
 			runer.addString(lexer.TokenText())
@@ -50,7 +50,7 @@ func scan(input string) ([]*node_t, error) {
 // ident_runer supplies the rules for turning runes into idents.
 type ident_runer struct {
 	accum  []rune
-	tokens []*node_t
+	tokens []*nodeT
 }
 
 func (r *ident_runer) isIdentRune(ch rune, i int) bool {
@@ -63,10 +63,10 @@ func (r *ident_runer) isIdentRune(ch rune, i int) bool {
 }
 
 func (r *ident_runer) addString(s string) {
-	r.addToken(newNode(string_token, s))
+	r.addToken(newNode(stringToken, s))
 }
 
-func (r *ident_runer) addToken(t *node_t) {
+func (r *ident_runer) addToken(t *nodeT) {
 	r.tokens = append(r.tokens, t.reclassify())
 }
 
@@ -91,7 +91,7 @@ func (r *ident_runer) flush() {
 	for accum != "" {
 		tok, s := r.extractToken(accum)
 		if tok == nil {
-			r.addToken(newNode(string_token, s))
+			r.addToken(newNode(stringToken, s))
 			accum = ""
 		} else {
 			r.addToken(newNode(tok.Symbol, tok.Text))
@@ -101,8 +101,8 @@ func (r *ident_runer) flush() {
 	r.accum = nil
 }
 
-func (r *ident_runer) extractToken(s string) (*token_t, string) {
-	var tok *token_t
+func (r *ident_runer) extractToken(s string) (*tokenT, string) {
+	var tok *tokenT
 	for k, v := range keyword_map {
 		if strings.HasPrefix(s, k) && (tok == nil || len(k) > len(tok.Text)) {
 			tok = v

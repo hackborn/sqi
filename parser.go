@@ -5,7 +5,7 @@ import (
 )
 
 // parse() converts a flat list of tokens into a tree.
-func parse(tokens []*node_t) (*node_t, error) {
+func parse(tokens []*nodeT) (*nodeT, error) {
 	p := newParser(tokens)
 	return p.Expression(0)
 }
@@ -17,24 +17,24 @@ type parser interface {
 	// Next answers the next node, or nil if we're finished.
 	// Note that a finished condition is both the node and error being nil;
 	// any error response is always an actual error.
-	Next() (*node_t, error)
+	Next() (*nodeT, error)
 	// Peek the next value. Note that this is never nil; an illegal is returned if we're at the end.
-	Peek() *node_t
-	Expression(rbp int) (*node_t, error)
+	Peek() *nodeT
+	Expression(rbp int) (*nodeT, error)
 }
 
 type parserT struct {
-	tokens   []*node_t
+	tokens   []*nodeT
 	position int
-	illegal  *node_t
+	illegal  *nodeT
 }
 
-func newParser(tokens []*node_t) parser {
-	illegal := &node_t{Token: token_map[illegal_token]}
+func newParser(tokens []*nodeT) parser {
+	illegal := &nodeT{Token: token_map[illegalToken]}
 	return &parserT{tokens: tokens, position: 0, illegal: illegal}
 }
 
-func (p *parserT) Next() (*node_t, error) {
+func (p *parserT) Next() (*nodeT, error) {
 	if p.position >= len(p.tokens) {
 		return nil, nil
 	}
@@ -43,14 +43,14 @@ func (p *parserT) Next() (*node_t, error) {
 	return p.tokens[pos], nil
 }
 
-func (p *parserT) Peek() *node_t {
+func (p *parserT) Peek() *nodeT {
 	if p.position >= len(p.tokens) {
 		return p.illegal
 	}
 	return p.tokens[p.position]
 }
 
-func (p *parserT) Expression(rbp int) (*node_t, error) {
+func (p *parserT) Expression(rbp int) (*nodeT, error) {
 	n, err := p.Next()
 	if err != nil {
 		return nil, err
