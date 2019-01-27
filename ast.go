@@ -181,13 +181,19 @@ func (n *fieldNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
 	if len(n.Field) < 1 {
 		return nil, newMalformedError("field node")
 	}
-	// Errors
+	if _i == nil {
+		return nil, nil
+	}
+	// Collectinons with special handling.
 	rt := reflect.TypeOf(_i)
+	ismap := false
 	switch rt.Kind() {
 	case reflect.Array:
 		return nil, newConditionError("fieldNode must not receive reflect.Array")
 	case reflect.Slice:
 		return nil, newConditionError("fieldNode must not receive reflect.Slice")
+	case reflect.Map:
+		ismap = true
 	}
 
 	var child interface{}
@@ -198,15 +204,19 @@ func (n *fieldNode) Eval(_i interface{}, opt *Opt) (interface{}, error) {
 	case reflect.Value:
 		return nil, newConditionError("fieldNode must not receive reflect.Value")
 	default:
-		child, err = n.runOnValue(reflect.Indirect(reflect.ValueOf(_i)))
+		// Special condition, this is a specific type of map, but we don't
+		// know what kind.
+		if ismap {
+			key := reflect.ValueOf(n.Field)
+			child = reflect.Indirect(reflect.ValueOf(_i)).MapIndex(key)
+		} else {
+			child, err = n.runOnValue(reflect.Indirect(reflect.ValueOf(_i)))
+		}
 	}
 	if child == nil || err != nil {
 		return nil, err
 	}
-	if tt, ok := child.(reflect.Value); ok {
-		return tt.Interface(), nil
-	}
-	return child, err
+	return n.getInterface(child)
 }
 
 func (n *fieldNode) runOnValue(v reflect.Value) (interface{}, error) {
@@ -215,6 +225,21 @@ func (n *fieldNode) runOnValue(v reflect.Value) (interface{}, error) {
 		return f, nil
 	}
 	return nil, errors.New("No field for " + n.Field)
+}
+
+// getInterface() calls reflect.Value.Interface() "safely" by handling
+// the panic. The reflect package doesn't seem to define any way to
+// determine if caling Interface() is valid, and as far as I can see,
+// rolling your own is fairly heavyweight.
+func (n *fieldNode) getInterface(_i interface{}) (interface{}, error) {
+	defer func() {
+		if r := recover(); r != nil {
+		}
+	}()
+	if i, ok := _i.(reflect.Value); ok {
+		return i.Interface(), nil
+	}
+	return _i, nil
 }
 
 // ------------------------------------------------------------

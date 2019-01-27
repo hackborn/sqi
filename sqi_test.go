@@ -190,6 +190,11 @@ func TestExpr(t *testing.T) {
 		{`[1]`, [2]string{"a", "b"}, Opt{}, "b", nil},
 		{`([1]) == "b"`, [2]string{"a", "b"}, Opt{}, true, nil},
 		{`/Children[0]`, input_3, Opt{}, nil, nil},
+		// Maps
+		{`/a`, map[string]string{`a`: `a1`}, Opt{}, "a1", nil},
+		// Special paths
+		{`/a/b`, map[string]string{`a/b`: `a1`}, Opt{}, nil, nil},
+		{`/"a/b"`, map[string]string{`a/b`: `a1`}, Opt{}, "a1", nil},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
