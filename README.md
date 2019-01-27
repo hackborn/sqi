@@ -53,9 +53,84 @@ Parent's children are [{Eleanor []} {Jason []}]
 First child's name is Eleanor
 ```
 
+## OPERATORS ##
+
+Examples for the following operators use this data model:
+
+```
+type Person struct {
+	Name     string
+	Age      int
+	Children []Person
+}
+```
+
+### PATH ###
+
+The path `/` operator answers the field or map key with the given value.
+
+Example:
+```
+sqi.EvalString(`/Name`, &Person{Name: "Ana"})
+```
+results in `"Ana"`.
+
+### EQUALS ###
+
+The equals `==` operator answers true if the left side matches the right side, false otherwise.
+
+Example:
+```
+sqi.EvalBool(`/Name == 22`, &Person{Age: 22})
+```
+results in `true`.
+
+### NOT EQUALS ###
+
+The not equals `!=` operator is the opposite of equals.
+
+### AND ###
+
+The and `&&` operator evalutes to true if both the left and right sides are true.
+
+### OR ###
+
+The or `||` operator evalutes to true if either the left or right side is true.
+
+### PARENTHESES ###
+
+The parentheses `()` operator encapsulates a phrase.
+
+### ARRAY ###
+
+The array `[]` operator answers an element of an array or slice. Currently it only supports a single index value.
+
+Example:
+```
+sqi.Eval(`/Children[0]`, &Person{Children: []Person{Person{Name: "a"}}})
+```
+results in `Person{Name: a}`.
+
+## TECHNIQUES ##
+
+### SELECT ###
+
+A select finds one or more items from a collection. Selects in sqi are basically paths with an equality statement.
+
+Example 1. Answer a collection of one or more items.
+```
+sqi.Eval(`/Children/(/Name == "c")`, &Person{Children: []Person{Person{Name: "a"}, Person{Name: "c"}}})
+```
+results in `[]Person{Person{Name: c}}`.
+
+Example 2. Answer a single value from a collection.
+```
+sqi.Eval(`(/Children/(/Name == "c"))[0]`, &Person{Children: []Person{Person{Name: "a"}, Person{Name: "c"}}})
+```
+results in `Person{Name: c}`.
 
 ## CREDIT ##
 
 Much thanks to a couple people who have provided great info on top down operator precedence parsers:
-[Cristian Dima](http://www.cristiandima.com/top-down-operator-precedence-parsing-in-go)  
+[Cristian Dima](http://www.cristiandima.com/top-down-operator-precedence-parsing-in-go)\
 [Eli Bendersky](https://eli.thegreenplace.net/2010/01/02/top-down-operator-precedence-parsing)
