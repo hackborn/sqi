@@ -1,9 +1,55 @@
 # sqi
 A simple Go query library for interface{}s.
 
-**sqi** is a simple way to ask questions about your data. It can be used to find values and extract results from complex user data, as well as data that has been hydrated via an encoding such as JSON.
+**Sqi** is a simple way to ask questions about your data. It can be used to find values and extract results from complex user data, as well as data that has been hydrated via an encoding such as JSON.
 
 ## EXAMPLE ##
+
+Sqi lets you access nested data via a simple topic string. It provides a general function `Eval()` for locating a result, along with conveniences such as `EvalInt()`, `EvalString()`, etc. for typed results. Here's a complete example:
+
+
+```
+package main
+
+import (
+	"fmt"
+	"github.com/hackborn/sqi"
+)
+
+func main() {
+	// User-defined data model
+	type Person struct {
+		Name     string
+		Children []Person
+	}
+
+	// User-defined data
+	parent := &Person{"Katie", []Person{
+		Person{"Eleanor", nil},
+		Person{"Jason", nil},
+	}}
+
+	// Get a single top-level value
+	name := sqi.EvalString("/Name", parent, nil)
+
+	// Get a collection of nested values.
+	children, _ := sqi.Eval("/Children", parent, nil)
+
+	// Get a value from a child.
+	childname := sqi.EvalString("/Children[0]/Name", parent, nil)
+
+	fmt.Println("Parent's name is", name)
+	fmt.Println("Parent's children are", children)
+	fmt.Println("First child's name is", childname)
+}
+```
+
+The output is
+```
+Parent's name is Katie
+Parent's children are [{Eleanor []} {Jason []}]
+First child's name is Eleanor
+```
 
 
 ## CREDIT ##
