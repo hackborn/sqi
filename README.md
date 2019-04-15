@@ -85,7 +85,7 @@ The equals `==` operator answers true if the left side matches the right side, f
 
 Example:
 ```
-sqi.EvalBool(`/Name == 22`, &Person{Age: 22})
+sqi.EvalBool(`/Age == 22`, &Person{Age: 22})
 ```
 results in `true`.
 
