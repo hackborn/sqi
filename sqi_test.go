@@ -313,6 +313,36 @@ func TestEvalString(t *testing.T) {
 }
 
 // ------------------------------------------------------------
+// TEST-EVAL-STRING-MAP
+
+func TestEvalStringMap(t *testing.T) {
+	sub0 := map[string]string { "Ana": "Belle", "Cera": "Sayed" }
+	input0 := map[string]interface{} { "Names": sub0 }
+	sub1 := map[string]interface{} { "Ana": "Belle", "Cera": "Sayed" }
+	input1 := map[string]interface{} { "Names": sub1 }
+
+	cases := []struct {
+		Term     string
+		Input    interface{}
+		Opt      *Opt
+		WantResp interface{}
+	}{
+		{`/Names`, input0, nil, sub0},
+		{`/Names`, input1, nil, sub1},
+	}
+	for i, tc := range cases {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			haveResp := EvalStringMap(tc.Term, tc.Input, tc.Opt)
+			if !interfaceMatches(haveResp, tc.WantResp) {
+				fmt.Println("Response mismatch, have\n", haveResp, "\nwant\n", tc.WantResp)
+				printExprConstruction(tc.Term)
+				t.Fatal()
+			}
+		})
+	}
+}
+
+// ------------------------------------------------------------
 // MODEL
 
 type Person struct {

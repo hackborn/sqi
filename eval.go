@@ -1,5 +1,9 @@
 package sqi
 
+import (
+	"reflect"
+)
+
 // ------------------------------------------------------------
 // EVAL
 
@@ -72,6 +76,35 @@ func EvalString(term string, input interface{}, opt *Opt) string {
 	return opt.onErrorString()
 }
 
+// EvalString runs term against input, returning the string map result.
+// If an error occurs, the opt.OnError is returned or nil.
+func EvalStringMap(term string, input interface{}, opt *Opt) map[string]interface{} {
+	resp, err := Eval(term, input, opt)
+	if err == nil && resp != nil {
+		switch v := resp.(type) {
+		case map[string]interface{}:
+			return v
+		default:
+			// Hand convert remaining cases. I really wish go had a way
+			// to cast to a interface{} but I don't think it does.
+			rt := reflect.TypeOf(resp)
+			rv := reflect.ValueOf(resp)
+			if rv.Kind() == reflect.Map && rt.Key().Kind() == reflect.String {
+				m := make(map[string]interface{})
+				iter := rv.MapRange()
+				for iter.Next() {
+					m[iter.Key().Interface().(string)] = iter.Value().Interface()
+				}
+				return m
+			}
+		}
+	}
+	if opt == nil {
+		return nil
+	}
+	return opt.onErrorStringMap()
+}
+
 // ------------------------------------------------------------
 // OPT
 
@@ -123,4 +156,14 @@ func (o Opt) onErrorString() string {
 		return v
 	}
 	return ""
+}
+
+func (o Opt) onErrorStringMap() map[string]interface{} {
+	if o.OnError == nil {
+		return nil
+	}
+	if v, ok := o.OnError.(map[string]interface{}); ok {
+		return v
+	}
+	return nil
 }
