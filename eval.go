@@ -76,7 +76,7 @@ func EvalString(term string, input interface{}, opt *Opt) string {
 	return opt.onErrorString()
 }
 
-// EvalString runs term against input, returning the string map result.
+// EvalStringMap runs term against input, returning the string map result.
 // If an error occurs, the opt.OnError is returned or nil.
 func EvalStringMap(term string, input interface{}, opt *Opt) map[string]interface{} {
 	resp, err := Eval(term, input, opt)
@@ -103,6 +103,36 @@ func EvalStringMap(term string, input interface{}, opt *Opt) map[string]interfac
 		return nil
 	}
 	return opt.onErrorStringMap()
+}
+
+// EvalStringSlice runs term against input, returning the string slice result.
+// If an error occurs, the opt.OnError is returned or nil.
+func EvalStringSlice(term string, input interface{}, opt *Opt) []string {
+	resp, err := Eval(term, input, opt)
+	if err == nil && resp != nil {
+		switch v := resp.(type) {
+		case []string:
+			return v
+		default:
+			// Hand convert remaining cases. I really wish go had a way
+			// to cast to a interface{} but I don't think it does.
+			rv := reflect.ValueOf(resp)
+			if rv.Kind() == reflect.Slice {
+				s := make([]string, 0, rv.Len())
+				for i := 0; i < rv.Len(); i++ {
+					intf := rv.Index(i).Interface()
+					if intfs, ok := intf.(string); ok {
+						s = append(s, intfs)
+					}
+				}
+				return s
+			}
+		}
+	}
+	if opt == nil {
+		return nil
+	}
+	return opt.onErrorStringSlice()
 }
 
 // ------------------------------------------------------------
@@ -163,6 +193,16 @@ func (o Opt) onErrorStringMap() map[string]interface{} {
 		return nil
 	}
 	if v, ok := o.OnError.(map[string]interface{}); ok {
+		return v
+	}
+	return nil
+}
+
+func (o Opt) onErrorStringSlice() []string {
+	if o.OnError == nil {
+		return nil
+	}
+	if v, ok := o.OnError.([]string); ok {
 		return v
 	}
 	return nil
