@@ -76,9 +76,9 @@ func EvalString(term string, input interface{}, opt *Opt) string {
 	return opt.onErrorString()
 }
 
-// EvalStringMap runs term against input, returning the string map result.
+// EvalStringInterfaceMap runs term against input, returning the string map result.
 // If an error occurs, the opt.OnError is returned or nil.
-func EvalStringMap(term string, input interface{}, opt *Opt) map[string]interface{} {
+func EvalStringInterfaceMap(term string, input interface{}, opt *Opt) map[string]interface{} {
 	resp, err := Eval(term, input, opt)
 	if err == nil && resp != nil {
 		switch v := resp.(type) {
@@ -102,7 +102,36 @@ func EvalStringMap(term string, input interface{}, opt *Opt) map[string]interfac
 	if opt == nil {
 		return nil
 	}
-	return opt.onErrorStringMap()
+	return opt.onErrorStringInterfaceMap()
+}
+
+// EvalStringStringMap runs term against input, returning the string map result.
+// If an error occurs, the opt.OnError is returned or nil.
+func EvalStringStringMap(term string, input interface{}, opt *Opt) map[string]string {
+	resp, err := Eval(term, input, opt)
+	if err == nil && resp != nil {
+		switch v := resp.(type) {
+		case map[string]string:
+			return v
+		default:
+			// Hand convert remaining cases.
+			rv := reflect.ValueOf(resp)
+			if rv.Kind() == reflect.Map {
+				m := make(map[string]string)
+				iter := rv.MapRange()
+				for iter.Next() {
+					if s, ok := iter.Value().Interface().(string); ok {
+						m[iter.Key().Interface().(string)] = s
+					}
+				}
+				return m
+			}
+		}
+	}
+	if opt == nil {
+		return nil
+	}
+	return opt.onErrorStringStringMap()
 }
 
 // EvalStringSlice runs term against input, returning the string slice result.
@@ -149,9 +178,6 @@ type Opt struct {
 }
 
 func (o Opt) onErrorBool() bool {
-	if o.OnError == nil {
-		return false
-	}
 	if v, ok := o.OnError.(bool); ok {
 		return v
 	}
@@ -159,9 +185,6 @@ func (o Opt) onErrorBool() bool {
 }
 
 func (o Opt) onErrorFloat64() float64 {
-	if o.OnError == nil {
-		return 0.0
-	}
 	if v, ok := o.OnError.(float64); ok {
 		return v
 	}
@@ -169,9 +192,6 @@ func (o Opt) onErrorFloat64() float64 {
 }
 
 func (o Opt) onErrorInt() int {
-	if o.OnError == nil {
-		return 0
-	}
 	if v, ok := o.OnError.(int); ok {
 		return v
 	}
@@ -179,29 +199,27 @@ func (o Opt) onErrorInt() int {
 }
 
 func (o Opt) onErrorString() string {
-	if o.OnError == nil {
-		return ""
-	}
 	if v, ok := o.OnError.(string); ok {
 		return v
 	}
 	return ""
 }
 
-func (o Opt) onErrorStringMap() map[string]interface{} {
-	if o.OnError == nil {
-		return nil
-	}
+func (o Opt) onErrorStringInterfaceMap() map[string]interface{} {
 	if v, ok := o.OnError.(map[string]interface{}); ok {
 		return v
 	}
 	return nil
 }
 
-func (o Opt) onErrorStringSlice() []string {
-	if o.OnError == nil {
-		return nil
+func (o Opt) onErrorStringStringMap() map[string]string {
+	if v, ok := o.OnError.(map[string]string); ok {
+		return v
 	}
+	return nil
+}
+
+func (o Opt) onErrorStringSlice() []string {
 	if v, ok := o.OnError.([]string); ok {
 		return v
 	}

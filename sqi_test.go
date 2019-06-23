@@ -313,9 +313,9 @@ func TestEvalString(t *testing.T) {
 }
 
 // ------------------------------------------------------------
-// TEST-EVAL-STRING-MAP
+// TEST-EVAL-STRING-INTERFACE-MAP
 
-func TestEvalStringMap(t *testing.T) {
+func TestEvalStringInterfaceMap(t *testing.T) {
 	sub0 := map[string]string{"Ana": "Belle", "Cera": "Sayed"}
 	input0 := map[string]interface{}{"Names": sub0}
 	sub1 := map[string]interface{}{"Ana": "Belle", "Cera": "Sayed"}
@@ -332,7 +332,37 @@ func TestEvalStringMap(t *testing.T) {
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			haveResp := EvalStringMap(tc.Term, tc.Input, tc.Opt)
+			haveResp := EvalStringInterfaceMap(tc.Term, tc.Input, tc.Opt)
+			if !interfaceMatches(haveResp, tc.WantResp) {
+				fmt.Println("Response mismatch, have\n", haveResp, "\nwant\n", tc.WantResp)
+				printExprConstruction(tc.Term)
+				t.Fatal()
+			}
+		})
+	}
+}
+
+// ------------------------------------------------------------
+// TEST-EVAL-STRING-STRING-MAP
+
+func TestEvalStringStringMap(t *testing.T) {
+	sub0 := map[string]string{"Ana": "Belle", "Cera": "Sayed"}
+	input0 := map[string]interface{}{"Names": sub0}
+	sub1 := map[string]interface{}{"Ana": "Belle", "Cera": "Sayed"}
+	input1 := map[string]interface{}{"Names": sub1}
+
+	cases := []struct {
+		Term     string
+		Input    interface{}
+		Opt      *Opt
+		WantResp interface{}
+	}{
+		{`/Names`, input0, nil, sub0},
+		{`/Names`, input1, nil, sub1},
+	}
+	for i, tc := range cases {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			haveResp := EvalStringStringMap(tc.Term, tc.Input, tc.Opt)
 			if !interfaceMatches(haveResp, tc.WantResp) {
 				fmt.Println("Response mismatch, have\n", haveResp, "\nwant\n", tc.WantResp)
 				printExprConstruction(tc.Term)
@@ -351,6 +381,14 @@ func TestEvalStringSlice(t *testing.T) {
 	sub1 := []interface{}{"Ana", "Cera"}
 	input1 := map[string]interface{}{"Names": sub1}
 
+	_sub2 := `["Ana", "Cera"]`
+	var sub2 interface{}
+	err := json.Unmarshal([]byte(_sub2), &sub2)
+	if err != nil {
+		panic(err)
+	}
+	input2 := map[string]interface{}{"Names": sub2}
+
 	cases := []struct {
 		Term     string
 		Input    interface{}
@@ -359,6 +397,7 @@ func TestEvalStringSlice(t *testing.T) {
 	}{
 		{`/Names`, input0, nil, sub0},
 		{`/Names`, input1, nil, sub1},
+		{`/Names`, input2, nil, sub2},
 	}
 	for i, tc := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
